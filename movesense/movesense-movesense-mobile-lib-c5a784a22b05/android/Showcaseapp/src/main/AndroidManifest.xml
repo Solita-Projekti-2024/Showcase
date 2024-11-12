@@ -55,6 +55,9 @@
         <activity
             android:name=".google_drive.SendLogsToGoogleDriveActivity"
             android:screenOrientation="portrait"/>
+        <activity
+            android:name=".section_01_movesense.tests.MultiSensorSubscribeActivity"
+            android:screenOrientation="portrait"/>
 
         <provider
             android:name="androidx.core.content.FileProvider"

@@ -30,6 +30,7 @@ import com.movesense.showcaseapp.section_01_movesense.tests.LedTestActivity;
 import com.movesense.showcaseapp.section_01_movesense.tests.LinearAccelerationTestActivity;
 import com.movesense.showcaseapp.section_01_movesense.tests.MagneticFieldTestActivity;
 import com.movesense.showcaseapp.section_01_movesense.tests.MemoryDiagnosticActivity;
+import com.movesense.showcaseapp.section_01_movesense.tests.MultiSensorSubscribeActivity;
 import com.movesense.showcaseapp.section_01_movesense.tests.MultiSubscribeActivity;
 import com.movesense.showcaseapp.section_01_movesense.tests.TemperatureTestActivity;
 import com.movesense.showcaseapp.utils.ThrowableToastingAction;
@@ -78,6 +79,8 @@ public class SensorListActivity extends BaseActivity implements View.OnClickList
         sensorListItemModels.add(new SensorListItemModel(getString(R.string.battery_energy)));
         sensorListItemModels.add(new SensorListItemModel(getString(R.string.imu_name)));
         sensorListItemModels.add(new SensorListItemModel(getString(R.string.Memory_Diagnostic)));
+        sensorListItemModels.add(new SensorListItemModel(getString(R.string.multi_sensor_subscribe_name)));
+
 
         SensorsListAdapter sensorsListAdapter = new SensorsListAdapter(sensorListItemModels, this);
         mSensorListRecyclerView.setLayoutManager(new LinearLayoutManager(this));
@@ -182,8 +185,11 @@ public class SensorListActivity extends BaseActivity implements View.OnClickList
             startActivity(new Intent(SensorListActivity.this, ImuActivity.class));
         } else if (getString(R.string.Memory_Diagnostic).equals(sensorName)) {
             startActivity(new Intent(SensorListActivity.this, MemoryDiagnosticActivity.class));
-        }
+        } else if (getString(R.string.multi_sensor_subscribe_name).equals(sensorName)) {
+        startActivity(new Intent(SensorListActivity.this, MultiSensorSubscribeActivity.class));
     }
+
+}
 
     @Override
     public void onBackPressed() {
