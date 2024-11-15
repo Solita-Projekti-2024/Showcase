@@ -19,6 +19,7 @@ import com.movesense.mds.MdsNotificationListener;
 import com.movesense.mds.MdsSubscription;
 import com.movesense.mds.internal.connectivity.MovesenseConnectedDevices;
 import com.movesense.showcaseapp.R;
+import com.movesense.showcaseapp.model.AngularVelocity;
 import com.movesense.showcaseapp.model.EcgModel;
 import com.movesense.showcaseapp.model.LinearAcceleration;
 import com.movesense.showcaseapp.utils.FormatHelper;
@@ -30,6 +31,8 @@ public class MultiSensorSubscribeActivity extends AppCompatActivity {
     private static final String TAG = "MultiSensorSubscribe";
     private static final String LINEAR_ACC_PATH = "Meas/Acc/";
     private static final String ECG_PATH = "Meas/ECG/";
+    private static final String GYRO_PATH = "Meas/Gyro/";
+
     private static final String URI_EVENTLISTENER = "suunto://MDS/EventListener";
 
     private MdsSubscription linearAccSubscription;
@@ -48,6 +51,14 @@ public class MultiSensorSubscribeActivity extends AppCompatActivity {
     private LineGraphSeries<DataPoint> ecgSeries;
     private int ecgDataPoints = 0; // Counter for ECG data points
 
+    //GYRO
+    private SwitchCompat switchSubscriptionGyro;
+    private TextView xAxisGyroTextView;
+    private TextView yAxisGyroTextView;
+    private TextView zAxisGyroTextView;
+    private MdsSubscription gyroSubscription;
+
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -64,6 +75,12 @@ public class MultiSensorSubscribeActivity extends AppCompatActivity {
         // Initialize ECG Graph
         ecgSeries = new LineGraphSeries<>();
         setupEcgGraph();
+
+        switchSubscriptionGyro = findViewById(R.id.switchSubscriptionGyro);
+        xAxisGyroTextView = findViewById(R.id.x_axis_gyro_textView);
+        yAxisGyroTextView = findViewById(R.id.y_axis_gyro_textView);
+        zAxisGyroTextView = findViewById(R.id.z_axis_gyro_textView);
+
 
         // Handle Linear Acceleration subscription toggle
         switchSubscriptionLinearAcc.setOnCheckedChangeListener((buttonView, isChecked) -> {
@@ -92,6 +109,21 @@ public class MultiSensorSubscribeActivity extends AppCompatActivity {
                 unsubscribeECG();
             }
         });
+
+        // GYRO Subscription
+        switchSubscriptionGyro.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            if (isChecked) {
+                if (MovesenseConnectedDevices.getConnectedDevices().size() > 0) {
+                    subscribeToGyro();
+                } else {
+                    Toast.makeText(this, "No connected device found", Toast.LENGTH_SHORT).show();
+                    switchSubscriptionGyro.setChecked(false);
+                }
+            } else {
+                unsubscribeGyro();
+            }
+        });
+
     }
 
     private void setupEcgGraph() {
@@ -109,6 +141,35 @@ public class MultiSensorSubscribeActivity extends AppCompatActivity {
 
         ecgSeries.setColor(getResources().getColor(R.color.colorGreen));
     }
+
+    private void subscribeToGyro() {
+        String gyroUri = FormatHelper.formatContractToJson(
+                MovesenseConnectedDevices.getConnectedDevice(0).getSerial(),
+                GYRO_PATH + "13" // Change the rate if needed
+        );
+
+        gyroSubscription = Mds.builder().build(this).subscribe(URI_EVENTLISTENER, gyroUri, new MdsNotificationListener() {
+            @Override
+            public void onNotification(String data) {
+                Log.d(TAG, "Gyro Data: " + data);
+                AngularVelocity gyroData = new Gson().fromJson(data, AngularVelocity.class);
+
+                if (gyroData != null && gyroData.body != null && gyroData.body.array.length > 0) {
+                    AngularVelocity.Array arrayData = gyroData.body.array[0];
+                    xAxisGyroTextView.setText(String.format(Locale.getDefault(), "x: %.6f", arrayData.x));
+                    yAxisGyroTextView.setText(String.format(Locale.getDefault(), "y: %.6f", arrayData.y));
+                    zAxisGyroTextView.setText(String.format(Locale.getDefault(), "z: %.6f", arrayData.z));
+                }
+            }
+
+            @Override
+            public void onError(MdsException e) {
+                Log.e(TAG, "Gyro Error: " + e.getMessage());
+                switchSubscriptionGyro.setChecked(false);
+            }
+        });
+    }
+
 
     private void subscribeToLinearAcc() {
         String linearAccUri = FormatHelper.formatContractToJson(
@@ -171,6 +232,14 @@ public class MultiSensorSubscribeActivity extends AppCompatActivity {
         });
     }
 
+    private void unsubscribeGyro() {
+        if (gyroSubscription != null) {
+            gyroSubscription.unsubscribe();
+            gyroSubscription = null;
+        }
+    }
+
+
     private void unsubscribeLinearAcc() {
         if (linearAccSubscription != null) {
             linearAccSubscription.unsubscribe();
@@ -190,5 +259,7 @@ public class MultiSensorSubscribeActivity extends AppCompatActivity {
         super.onDestroy();
         unsubscribeLinearAcc();
         unsubscribeECG();
+        unsubscribeGyro();
+
     }
 }
