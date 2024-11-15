@@ -10,12 +10,16 @@ import androidx.appcompat.widget.SwitchCompat;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.google.gson.Gson;
+import com.jjoe64.graphview.GraphView;
+import com.jjoe64.graphview.series.DataPoint;
+import com.jjoe64.graphview.series.LineGraphSeries;
 import com.movesense.mds.Mds;
 import com.movesense.mds.MdsException;
 import com.movesense.mds.MdsNotificationListener;
 import com.movesense.mds.MdsSubscription;
 import com.movesense.mds.internal.connectivity.MovesenseConnectedDevices;
 import com.movesense.showcaseapp.R;
+import com.movesense.showcaseapp.model.EcgModel;
 import com.movesense.showcaseapp.model.LinearAcceleration;
 import com.movesense.showcaseapp.utils.FormatHelper;
 
@@ -27,6 +31,7 @@ public class MultiSensorSubscribeActivity extends AppCompatActivity {
     private static final String LINEAR_ACC_PATH = "Meas/Acc/";
     private static final String ECG_PATH = "Meas/ECG/";
     private static final String URI_EVENTLISTENER = "suunto://MDS/EventListener";
+
     private MdsSubscription linearAccSubscription;
     private MdsSubscription ecgSubscription;
 
@@ -37,6 +42,11 @@ public class MultiSensorSubscribeActivity extends AppCompatActivity {
     private TextView yAxisLinearAccTextView;
     private TextView zAxisLinearAccTextView;
     private TextView ecgTextView;
+    private GraphView ecgGraphView;
+
+    // ECG Graph
+    private LineGraphSeries<DataPoint> ecgSeries;
+    private int ecgDataPoints = 0; // Counter for ECG data points
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -49,7 +59,11 @@ public class MultiSensorSubscribeActivity extends AppCompatActivity {
         xAxisLinearAccTextView = findViewById(R.id.x_axis_linearAcc_textView);
         yAxisLinearAccTextView = findViewById(R.id.y_axis_linearAcc_textView);
         zAxisLinearAccTextView = findViewById(R.id.z_axis_linearAcc_textView);
-        ecgTextView = findViewById(R.id.ecg_textView);
+        ecgGraphView = findViewById(R.id.ecg_graph_view);
+
+        // Initialize ECG Graph
+        ecgSeries = new LineGraphSeries<>();
+        setupEcgGraph();
 
         // Handle Linear Acceleration subscription toggle
         switchSubscriptionLinearAcc.setOnCheckedChangeListener((buttonView, isChecked) -> {
@@ -57,7 +71,7 @@ public class MultiSensorSubscribeActivity extends AppCompatActivity {
                 if (MovesenseConnectedDevices.getConnectedDevices().size() > 0) {
                     subscribeToLinearAcc();
                 } else {
-                    Toast.makeText(MultiSensorSubscribeActivity.this, "No connected device found", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(this, "No connected device found", Toast.LENGTH_SHORT).show();
                     switchSubscriptionLinearAcc.setChecked(false);
                 }
             } else {
@@ -71,13 +85,29 @@ public class MultiSensorSubscribeActivity extends AppCompatActivity {
                 if (MovesenseConnectedDevices.getConnectedDevices().size() > 0) {
                     subscribeToECG();
                 } else {
-                    Toast.makeText(MultiSensorSubscribeActivity.this, "No connected device found", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(this, "No connected device found", Toast.LENGTH_SHORT).show();
                     switchSubscriptionECG.setChecked(false);
                 }
             } else {
                 unsubscribeECG();
             }
         });
+    }
+
+    private void setupEcgGraph() {
+        ecgGraphView.addSeries(ecgSeries);
+        ecgGraphView.getViewport().setXAxisBoundsManual(true);
+        ecgGraphView.getViewport().setMinX(0);
+        ecgGraphView.getViewport().setMaxX(500);
+
+        ecgGraphView.getViewport().setYAxisBoundsManual(true);
+        ecgGraphView.getViewport().setMinY(-5000);
+        ecgGraphView.getViewport().setMaxY(5000);
+
+        ecgGraphView.getViewport().setScrollable(false);
+        ecgGraphView.getViewport().setScrollableY(false);
+
+        ecgSeries.setColor(getResources().getColor(R.color.colorGreen));
     }
 
     private void subscribeToLinearAcc() {
@@ -100,11 +130,8 @@ public class MultiSensorSubscribeActivity extends AppCompatActivity {
 
             @Override
             public void onError(MdsException e) {
-                Log.e(TAG, "Linear Acceleration Subscription Error: " + e.getMessage());
-                Toast.makeText(MultiSensorSubscribeActivity.this, "Linear Acceleration Error: " + e.getMessage(), Toast.LENGTH_SHORT).show();
-                if (switchSubscriptionLinearAcc.isChecked()) {
-                    switchSubscriptionLinearAcc.setChecked(false);
-                }
+                Log.e(TAG, "Linear Acc Error: " + e.getMessage());
+                switchSubscriptionLinearAcc.setChecked(false);
             }
         });
     }
@@ -118,17 +145,28 @@ public class MultiSensorSubscribeActivity extends AppCompatActivity {
             @Override
             public void onNotification(String data) {
                 Log.d(TAG, "ECG Data: " + data);
-                // Process ECG data if necessary, for example:
-                ecgTextView.setText(data);  // You can format this as needed
+
+                EcgModel ecgData = new Gson().fromJson(data, EcgModel.class);
+                if (ecgData != null && ecgData.getBody() != null) {
+                    int[] ecgSamples = ecgData.getBody().getData();
+                    for (int sample : ecgSamples) {
+                        ecgSeries.appendData(
+                                new DataPoint(ecgDataPoints++, sample),
+                                false,
+                                500
+                        );
+                        if (ecgDataPoints >= 500) {
+                            ecgDataPoints = 0;
+                            ecgSeries.resetData(new DataPoint[0]);
+                        }
+                    }
+                }
             }
 
             @Override
             public void onError(MdsException e) {
-                Log.e(TAG, "ECG Subscription Error: " + e.getMessage());
-                Toast.makeText(MultiSensorSubscribeActivity.this, "ECG Error: " + e.getMessage(), Toast.LENGTH_SHORT).show();
-                if (switchSubscriptionECG.isChecked()) {
-                    switchSubscriptionECG.setChecked(false);
-                }
+                Log.e(TAG, "ECG Error: " + e.getMessage());
+                switchSubscriptionECG.setChecked(false);
             }
         });
     }

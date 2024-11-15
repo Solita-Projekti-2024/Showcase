@@ -111,18 +111,17 @@
                 android:paddingLeft="5dp"
                 android:text="@string/off_on"/>
 
-            <TextView
-                android:id="@+id/ecg_textView"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="10dp"
-                android:text="ECG Value"
-                android:textSize="16sp"/>
+
+
+
 
         </LinearLayout>
 
     </LinearLayout>
-
+    <com.jjoe64.graphview.GraphView
+        android:id="@+id/ecg_graph_view"
+        android:layout_width="match_parent"
+        android:layout_height="200dp" />
     <TextView
         android:layout_marginTop="4dp"
         android:layout_width="match_parent"
