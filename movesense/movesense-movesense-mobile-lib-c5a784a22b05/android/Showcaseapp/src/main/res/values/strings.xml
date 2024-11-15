@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">Movesense Showcase App</string>
+    <string name="app_name">Name of the App</string>
 
     <string name="title_location_permission">Location permission</string>
     <string name="text_location_permission">Bluetooth LE scanning requires location permission</string>
