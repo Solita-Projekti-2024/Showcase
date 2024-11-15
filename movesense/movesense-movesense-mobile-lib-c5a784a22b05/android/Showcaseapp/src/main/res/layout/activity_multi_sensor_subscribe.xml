@@ -111,6 +111,27 @@
                 android:paddingLeft="5dp"
                 android:text="@string/off_on"/>
 
+            <!-- Heart Rate -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="10dp"
+                android:text="Heart Rate"/>
+
+            <androidx.appcompat.widget.SwitchCompat
+                android:id="@+id/switchSubscriptionHeartRate"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:paddingLeft="5dp"
+                android:text="@string/off_on"/>
+            <TextView
+                android:id="@+id/heart_rate_textView"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="10dp"
+                android:text="Heart Rate"
+                android:textSize="16sp"/>
+
         </LinearLayout>
 
         <!-- Gyroscope (Angular Velocity) -->

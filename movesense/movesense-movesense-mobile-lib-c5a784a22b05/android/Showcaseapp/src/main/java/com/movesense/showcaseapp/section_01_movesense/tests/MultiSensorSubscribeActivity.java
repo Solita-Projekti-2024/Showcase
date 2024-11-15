@@ -21,6 +21,8 @@ import com.movesense.mds.internal.connectivity.MovesenseConnectedDevices;
 import com.movesense.showcaseapp.R;
 import com.movesense.showcaseapp.model.AngularVelocity;
 import com.movesense.showcaseapp.model.EcgModel;
+import com.movesense.showcaseapp.model.HeartRate;
+
 import com.movesense.showcaseapp.model.LinearAcceleration;
 import com.movesense.showcaseapp.utils.FormatHelper;
 
@@ -32,6 +34,8 @@ public class MultiSensorSubscribeActivity extends AppCompatActivity {
     private static final String LINEAR_ACC_PATH = "Meas/Acc/";
     private static final String ECG_PATH = "Meas/ECG/";
     private static final String GYRO_PATH = "Meas/Gyro/";
+    private final String HEART_RATE_PATH = "Meas/Hr";
+
 
     private static final String URI_EVENTLISTENER = "suunto://MDS/EventListener";
 
@@ -41,6 +45,8 @@ public class MultiSensorSubscribeActivity extends AppCompatActivity {
     // Views
     private SwitchCompat switchSubscriptionLinearAcc;
     private SwitchCompat switchSubscriptionECG;
+    private MdsSubscription heartRateSubscription;
+
     private TextView xAxisLinearAccTextView;
     private TextView yAxisLinearAccTextView;
     private TextView zAxisLinearAccTextView;
@@ -58,6 +64,11 @@ public class MultiSensorSubscribeActivity extends AppCompatActivity {
     private TextView zAxisGyroTextView;
     private MdsSubscription gyroSubscription;
 
+    // HR
+    private SwitchCompat switchSubscriptionHeartRate; // New switch for heart rate
+    private TextView heartRateTextView; // TextView for heart rate
+
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -71,6 +82,8 @@ public class MultiSensorSubscribeActivity extends AppCompatActivity {
         yAxisLinearAccTextView = findViewById(R.id.y_axis_linearAcc_textView);
         zAxisLinearAccTextView = findViewById(R.id.z_axis_linearAcc_textView);
         ecgGraphView = findViewById(R.id.ecg_graph_view);
+        switchSubscriptionHeartRate = findViewById(R.id.switchSubscriptionHeartRate); // Initialize the new switch
+        heartRateTextView = findViewById(R.id.heart_rate_textView); // TextView for heart rate
 
         // Initialize ECG Graph
         ecgSeries = new LineGraphSeries<>();
@@ -121,6 +134,19 @@ public class MultiSensorSubscribeActivity extends AppCompatActivity {
                 }
             } else {
                 unsubscribeGyro();
+            }
+        });
+        // Handle Heart Rate subscription toggle
+        switchSubscriptionHeartRate.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            if (isChecked) {
+                if (MovesenseConnectedDevices.getConnectedDevices().size() > 0) {
+                    subscribeToHeartRate();
+                } else {
+                    Toast.makeText(this, "No connected device found", Toast.LENGTH_SHORT).show();
+                    switchSubscriptionHeartRate.setChecked(false);
+                }
+            } else {
+                unsubscribeHeartRate();
             }
         });
 
@@ -238,6 +264,40 @@ public class MultiSensorSubscribeActivity extends AppCompatActivity {
             gyroSubscription = null;
         }
     }
+    // Subscribe to Heart Rate
+    private void subscribeToHeartRate() {
+        String heartRateUri = FormatHelper.formatContractToJson(
+                MovesenseConnectedDevices.getConnectedDevice(0).getSerial(),
+                HEART_RATE_PATH
+        );
+
+        heartRateSubscription = Mds.builder().build(this).subscribe(URI_EVENTLISTENER, heartRateUri, new MdsNotificationListener() {
+            @Override
+            public void onNotification(String data) {
+                Log.d(TAG, "Heart Rate Data: " + data);
+                HeartRate heartRate = new Gson().fromJson(data, HeartRate.class);
+
+                if (heartRate != null) {
+                    heartRateTextView.setText(String.format(Locale.getDefault(),
+                            "Heart Rate: %.2f bpm", heartRate.body.average));
+                }
+            }
+
+            @Override
+            public void onError(MdsException e) {
+                Log.e(TAG, "Heart Rate Error: " + e.getMessage());
+                switchSubscriptionHeartRate.setChecked(false);
+            }
+        });
+    }
+
+    // Unsubscribe from Heart Rate
+    private void unsubscribeHeartRate() {
+        if (heartRateSubscription != null) {
+            heartRateSubscription.unsubscribe();
+            heartRateSubscription = null;
+        }
+    }
 
 
     private void unsubscribeLinearAcc() {
@@ -260,6 +320,8 @@ public class MultiSensorSubscribeActivity extends AppCompatActivity {
         unsubscribeLinearAcc();
         unsubscribeECG();
         unsubscribeGyro();
+        unsubscribeHeartRate(); // Unsubscribe heart rate when destroying activity
+
 
     }
 }
