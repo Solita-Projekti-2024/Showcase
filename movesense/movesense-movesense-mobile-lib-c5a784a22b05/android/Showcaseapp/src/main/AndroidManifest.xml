@@ -85,8 +85,13 @@
 
         <activity
             android:name=".section_00_mainView.MainViewActivity"
-            android:exported="true"
             android:screenOrientation="portrait">
+
+        </activity>
+        <activity
+            android:name=".section_01_movesense.MovesenseActivity"
+            android:screenOrientation="portrait"
+            android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
                 <action android:name="android.intent.action.MY_ACTION"/>
@@ -94,9 +99,8 @@
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
         </activity>
-        <activity
-            android:name=".section_01_movesense.MovesenseActivity"
-            android:screenOrientation="portrait"/>
+
+
         <activity
             android:name=".section_02_multi_connection.connection.MultiConnectionActivity"
             android:screenOrientation="portrait"/>
