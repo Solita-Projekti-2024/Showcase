@@ -63,7 +63,8 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:paddingLeft="5dp"
-                android:text="@string/off_on"/>
+                android:text="@string/off_on"
+                android:checked="false"/>
 
             <TextView
                 android:id="@+id/x_axis_linearAcc_textView"
@@ -109,7 +110,8 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:paddingLeft="5dp"
-                android:text="@string/off_on"/>
+                android:text="@string/off_on"
+                android:checked="false"/>
 
             <!-- Heart Rate -->
             <TextView
@@ -123,7 +125,8 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:paddingLeft="5dp"
-                android:text="@string/off_on"/>
+                android:text="@string/off_on"
+                android:checked="false"/>
             <TextView
                 android:id="@+id/heart_rate_textView"
                 android:layout_width="wrap_content"
@@ -152,7 +155,8 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:paddingLeft="5dp"
-                android:text="@string/off_on"/>
+                android:text="@string/off_on"
+                android:checked="false"/>
 
             <TextView
                 android:id="@+id/x_axis_gyro_textView"
