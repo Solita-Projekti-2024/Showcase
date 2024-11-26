@@ -1,5 +1,6 @@
 package com.movesense.showcaseapp.section_01_movesense.tests;
 
+import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
 import android.widget.CompoundButton;
@@ -26,6 +27,7 @@ import com.movesense.showcaseapp.model.HeartRate;
 import com.movesense.showcaseapp.model.LinearAcceleration;
 import com.movesense.showcaseapp.utils.FormatHelper;
 
+import java.util.LinkedList;
 import java.util.Locale;
 
 public class MultiSensorSubscribeActivity extends AppCompatActivity {
@@ -67,6 +69,14 @@ public class MultiSensorSubscribeActivity extends AppCompatActivity {
     // HR
     private SwitchCompat switchSubscriptionHeartRate; // New switch for heart rate
     private TextView heartRateTextView; // TextView for heart rate
+
+    // Define window size for the median filter
+    private static final int WINDOW_SIZE = 7;
+
+    // Buffers to hold the recent values for each axis
+    private LinkedList<Float> xBuffer = new LinkedList<>();
+    private LinkedList<Float> yBuffer = new LinkedList<>();
+    private LinkedList<Float> zBuffer = new LinkedList<>();
 
 
 
@@ -197,6 +207,20 @@ public class MultiSensorSubscribeActivity extends AppCompatActivity {
     }
 
 
+    private float calculateMedian(LinkedList<Float> buffer) {
+        LinkedList<Float> sortedBuffer = new LinkedList<>(buffer);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+            sortedBuffer.sort(Float::compareTo);
+        }
+        int middle = sortedBuffer.size() / 2;
+        if (sortedBuffer.size() % 2 == 0) {
+            return (sortedBuffer.get(middle - 1) + sortedBuffer.get(middle)) / 2.0f;
+        } else {
+            return sortedBuffer.get(middle);
+        }
+    }
+
+
     private void subscribeToLinearAcc() {
         String linearAccUri = FormatHelper.formatContractToJson(
                 MovesenseConnectedDevices.getConnectedDevice(0).getSerial(),
@@ -209,9 +233,32 @@ public class MultiSensorSubscribeActivity extends AppCompatActivity {
                 LinearAcceleration linearAccelerationData = new Gson().fromJson(data, LinearAcceleration.class);
                 if (linearAccelerationData != null) {
                     LinearAcceleration.Array arrayData = linearAccelerationData.body.array[0];
-                    xAxisLinearAccTextView.setText(String.format(Locale.getDefault(), "x: %.6f", arrayData.x));
-                    yAxisLinearAccTextView.setText(String.format(Locale.getDefault(), "y: %.6f", arrayData.y));
-                    zAxisLinearAccTextView.setText(String.format(Locale.getDefault(), "z: %.6f", arrayData.z));
+
+                    // Update buffers
+                    if (xBuffer.size() >= WINDOW_SIZE) xBuffer.poll();  // Remove oldest value
+                    if (yBuffer.size() >= WINDOW_SIZE) yBuffer.poll();
+                    if (zBuffer.size() >= WINDOW_SIZE) zBuffer.poll();
+                    xBuffer.add((float) arrayData.x);
+                    yBuffer.add((float) arrayData.y);
+                    zBuffer.add((float) arrayData.z);
+
+                    // Apply median filter
+                    float filteredX = calculateMedian(xBuffer);
+                    float filteredY = calculateMedian(yBuffer);
+                    float filteredZ = calculateMedian(zBuffer);
+
+                    xAxisLinearAccTextView.setText(String.format(Locale.getDefault(), "x: %.6f", filteredX));
+                    yAxisLinearAccTextView.setText(String.format(Locale.getDefault(), "y: %.6f", filteredY));
+                    zAxisLinearAccTextView.setText(String.format(Locale.getDefault(), "z: %.6f", filteredZ));
+
+                    //Check leaning
+                    if (filteredY < 6.5 && filteredY > 3.2) {
+                        Log.d(TAG, "Person is leaning");
+                        //TÄÄLLÄ PITÄISI JOTAIN TEHDÄ
+                    } else if (filteredY <= 3.2) {
+                        Log.d(TAG, "Person is leaning SIGNIFICANTLY or HAS FALLEN");
+                        //VARMAAN JOTAIN PITÄIS TÄÄLLÄKIN TEHDÄ
+                    }
                 }
             }
 
