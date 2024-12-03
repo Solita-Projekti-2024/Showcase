@@ -1,9 +1,11 @@
 package com.movesense.showcaseapp.section_01_movesense.tests;
 
+import android.app.UiAutomation;
 import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
 import android.widget.CompoundButton;
+import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -93,6 +95,7 @@ public class MultiSensorSubscribeActivity extends AppCompatActivity {
         xAxisGyroTextView = findViewById(R.id.x_axis_gyro_textView);
         yAxisGyroTextView = findViewById(R.id.y_axis_gyro_textView);
         zAxisGyroTextView = findViewById(R.id.z_axis_gyro_textView);
+
 
         // ECG Graph initialization
         ecgSeries = new LineGraphSeries<>();
@@ -189,6 +192,8 @@ public class MultiSensorSubscribeActivity extends AppCompatActivity {
             @Override
             public void onNotification(String data) {
                 Log.d(TAG, "Linear Acceleration Data: " + data);
+                ImageView stickmanImage = findViewById(R.id.image_stickman);
+
                 LinearAcceleration linearAccelerationData = new Gson().fromJson(data, LinearAcceleration.class);
                 if (linearAccelerationData != null) {
                     LinearAcceleration.Array arrayData = linearAccelerationData.body.array[0];
@@ -214,9 +219,13 @@ public class MultiSensorSubscribeActivity extends AppCompatActivity {
                     if (filteredY < 6.5 && filteredY > 3.2) {
                         Log.d(TAG, "Person is leaning");
                         //TÄÄLLÄ PITÄISI JOTAIN TEHDÄ
+                        stickmanImage.setRotation(45);
                     } else if (filteredY <= 3.2) {
                         Log.d(TAG, "Person is leaning SIGNIFICANTLY or HAS FALLEN");
                         //VARMAAN JOTAIN PITÄIS TÄÄLLÄKIN TEHDÄ
+                        stickmanImage.setRotation(90);
+                    } else {
+                        stickmanImage.setRotation(0);
                     }
                 }
             }
