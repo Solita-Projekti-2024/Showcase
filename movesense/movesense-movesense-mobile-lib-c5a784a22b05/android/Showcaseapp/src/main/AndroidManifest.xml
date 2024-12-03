@@ -88,6 +88,12 @@
             android:screenOrientation="portrait">
 
         </activity>
+
+        <activity
+            android:name=".section_01_movesense.info"
+            android:screenOrientation="portrait">
+
+        </activity>
         <activity
             android:name=".section_01_movesense.MovesenseActivity"
             android:screenOrientation="portrait"

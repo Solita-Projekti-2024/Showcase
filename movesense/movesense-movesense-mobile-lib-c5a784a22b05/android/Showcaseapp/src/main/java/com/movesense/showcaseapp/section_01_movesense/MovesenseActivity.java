@@ -70,7 +70,7 @@ public class MovesenseActivity extends AppCompatActivity implements MovesenseCon
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_movesense);
+        setContentView(R.layout.bt_connection);
         ButterKnife.bind(this);
 
         if (getSupportActionBar() != null) {

@@ -7,46 +7,142 @@
     android:layout_height="match_parent"
     android:padding="16dp"
     tools:context=".section_01_movesense.tests.MultiSensorSubscribeActivity">
+
+    <!-- Title TextView -->
     <TextView
         android:id="@+id/tv_sensor_data"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Valittu sensori:"
-        android:textSize="18sp"
+        android:text="Sensor Data"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent" />
 
-    <View
-        android:id="@+id/dataa"
-        android:layout_width="325dp"
-        android:layout_height="259dp"
-        android:layout_marginTop="16dp"
-        android:background="@android:color/holo_blue_light"
-        app:layout_constraintEnd_toEndOf="parent"
+    <!-- Sensor Data Horizontal Container -->
+    <LinearLayout
+        android:id="@+id/data_row"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center"
+        android:layout_marginTop="10dp"
+        app:layout_constraintTop_toBottomOf="@id/tv_sensor_data"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/tv_sensor_data" />
+        app:layout_constraintEnd_toEndOf="parent">
 
+        <!-- Linear Acceleration TextViews -->
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical"
+            android:padding="8dp">
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Linear Acc"/>
+            <TextView
+                android:id="@+id/x_axis_linearAcc_textView"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="X-axis: " />
+
+            <TextView
+                android:id="@+id/y_axis_linearAcc_textView"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Y-axis: " />
+
+            <TextView
+                android:id="@+id/z_axis_linearAcc_textView"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Z-axis: " />
+        </LinearLayout>
+
+        <!-- Gyroscope TextViews -->
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical"
+            android:padding="8dp">
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Gyroscope"/>
+            <TextView
+                android:id="@+id/x_axis_gyro_textView"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="X-axis: " />
+
+            <TextView
+                android:id="@+id/y_axis_gyro_textView"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Y-axis: " />
+
+            <TextView
+                android:id="@+id/z_axis_gyro_textView"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Z-axis: " />
+        </LinearLayout>
+
+        <!-- Heart Rate TextView -->
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical"
+            android:padding="8dp">
+
+            <TextView
+                android:id="@+id/heart_rate_textView"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Heart Rate: " />
+        </LinearLayout>
+    </LinearLayout>
+
+    <!-- ECG Subscription and Graph -->
+    <LinearLayout
+        android:id="@+id/ecg_container"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:layout_marginTop="10dp"
+        app:layout_constraintTop_toBottomOf="@id/data_row"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent">
+
+        <!-- ECG Graph -->
+        <com.jjoe64.graphview.GraphView
+            android:id="@+id/ecg_graph_view"
+            android:layout_width="match_parent"
+            android:layout_height="180dp" />
+    </LinearLayout>
+
+    <!-- Stickman Image -->
     <ImageView
         android:id="@+id/image_stickman"
-        android:layout_width="105dp"
-        android:layout_height="237dp"
-        android:layout_marginTop="16dp"
+        android:layout_width="70dp"
+        android:layout_height="158dp"
+        android:layout_marginTop="10dp"
         android:src="@drawable/stickman"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/ecg_container"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/dataa"
-        app:layout_constraintVertical_bias="0.183" />
-
+        app:layout_constraintEnd_toEndOf="parent" />
+    <!-- Back Button -->
     <Button
         android:id="@+id/btn_back3"
         android:layout_width="wrap_content"
         android:layout_height="48dp"
-        android:layout_marginTop="44dp"
+        android:layout_marginTop="10dp"
         android:text="Takaisin"
-        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/image_stickman"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/image_stickman" />
+        app:layout_constraintEnd_toEndOf="parent" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

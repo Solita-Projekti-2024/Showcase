@@ -45,8 +45,6 @@ public class MultiSensorSubscribeActivity extends AppCompatActivity {
     private MdsSubscription ecgSubscription;
 
     // Views
-    private SwitchCompat switchSubscriptionLinearAcc;
-    private SwitchCompat switchSubscriptionECG;
     private MdsSubscription heartRateSubscription;
 
     private TextView xAxisLinearAccTextView;
@@ -60,14 +58,12 @@ public class MultiSensorSubscribeActivity extends AppCompatActivity {
     private int ecgDataPoints = 0; // Counter for ECG data points
 
     //GYRO
-    private SwitchCompat switchSubscriptionGyro;
     private TextView xAxisGyroTextView;
     private TextView yAxisGyroTextView;
     private TextView zAxisGyroTextView;
     private MdsSubscription gyroSubscription;
 
     // HR
-    private SwitchCompat switchSubscriptionHeartRate; // New switch for heart rate
     private TextView heartRateTextView; // TextView for heart rate
 
     // Define window size for the median filter
@@ -83,84 +79,48 @@ public class MultiSensorSubscribeActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_multi_sensor_subscribe);
+        setContentView(R.layout.measurements); // Ensure this matches your XML file name
 
-        // Initialize views
-        switchSubscriptionLinearAcc = findViewById(R.id.switchSubscriptionLinearAcc);
-        switchSubscriptionECG = findViewById(R.id.switchSubscriptionECG);
+        // Initialize views based on updated XML layout
         xAxisLinearAccTextView = findViewById(R.id.x_axis_linearAcc_textView);
         yAxisLinearAccTextView = findViewById(R.id.y_axis_linearAcc_textView);
         zAxisLinearAccTextView = findViewById(R.id.z_axis_linearAcc_textView);
+
         ecgGraphView = findViewById(R.id.ecg_graph_view);
-        switchSubscriptionHeartRate = findViewById(R.id.switchSubscriptionHeartRate); // Initialize the new switch
-        heartRateTextView = findViewById(R.id.heart_rate_textView); // TextView for heart rate
 
-        // Initialize ECG Graph
-        ecgSeries = new LineGraphSeries<>();
-        setupEcgGraph();
+        heartRateTextView = findViewById(R.id.heart_rate_textView);
 
-        switchSubscriptionGyro = findViewById(R.id.switchSubscriptionGyro);
         xAxisGyroTextView = findViewById(R.id.x_axis_gyro_textView);
         yAxisGyroTextView = findViewById(R.id.y_axis_gyro_textView);
         zAxisGyroTextView = findViewById(R.id.z_axis_gyro_textView);
 
+        // ECG Graph initialization
+        ecgSeries = new LineGraphSeries<>();
+        setupEcgGraph();
 
-        // Handle Linear Acceleration subscription toggle
-        switchSubscriptionLinearAcc.setOnCheckedChangeListener((buttonView, isChecked) -> {
-            if (isChecked) {
-                if (MovesenseConnectedDevices.getConnectedDevices().size() > 0) {
-                    subscribeToLinearAcc();
-                } else {
-                    Toast.makeText(this, "No connected device found", Toast.LENGTH_SHORT).show();
-                    switchSubscriptionLinearAcc.setChecked(false);
-                }
-            } else {
-                unsubscribeLinearAcc();
-            }
-        });
 
-        // Handle ECG subscription toggle
-        switchSubscriptionECG.setOnCheckedChangeListener((buttonView, isChecked) -> {
-            if (isChecked) {
-                if (MovesenseConnectedDevices.getConnectedDevices().size() > 0) {
-                    subscribeToECG();
-                } else {
-                    Toast.makeText(this, "No connected device found", Toast.LENGTH_SHORT).show();
-                    switchSubscriptionECG.setChecked(false);
-                }
-            } else {
-                unsubscribeECG();
-            }
-        });
 
-        // GYRO Subscription
-        switchSubscriptionGyro.setOnCheckedChangeListener((buttonView, isChecked) -> {
-            if (isChecked) {
-                if (MovesenseConnectedDevices.getConnectedDevices().size() > 0) {
-                    subscribeToGyro();
-                } else {
-                    Toast.makeText(this, "No connected device found", Toast.LENGTH_SHORT).show();
-                    switchSubscriptionGyro.setChecked(false);
-                }
-            } else {
-                unsubscribeGyro();
-            }
-        });
-        // Handle Heart Rate subscription toggle
-        switchSubscriptionHeartRate.setOnCheckedChangeListener((buttonView, isChecked) -> {
-            if (isChecked) {
-                if (MovesenseConnectedDevices.getConnectedDevices().size() > 0) {
-                    subscribeToHeartRate();
-                } else {
-                    Toast.makeText(this, "No connected device found", Toast.LENGTH_SHORT).show();
-                    switchSubscriptionHeartRate.setChecked(false);
-                }
-            } else {
-                unsubscribeHeartRate();
-            }
-        });
+    // Automatically enable subscriptions
+        if (MovesenseConnectedDevices.getConnectedDevices().size() > 0) {
+            subscribeToLinearAcc();
+            subscribeToECG();
+            subscribeToGyro();
+            subscribeToHeartRate();
+
+
+        } else {
+            Toast.makeText(this, "No connected device found", Toast.LENGTH_SHORT).show();
+        }
+
+
+
+
+
+
+
 
     }
+
 
     private void setupEcgGraph() {
         ecgGraphView.addSeries(ecgSeries);
@@ -201,7 +161,6 @@ public class MultiSensorSubscribeActivity extends AppCompatActivity {
             @Override
             public void onError(MdsException e) {
                 Log.e(TAG, "Gyro Error: " + e.getMessage());
-                switchSubscriptionGyro.setChecked(false);
             }
         });
     }
@@ -265,7 +224,6 @@ public class MultiSensorSubscribeActivity extends AppCompatActivity {
             @Override
             public void onError(MdsException e) {
                 Log.e(TAG, "Linear Acc Error: " + e.getMessage());
-                switchSubscriptionLinearAcc.setChecked(false);
             }
         });
     }
@@ -300,7 +258,6 @@ public class MultiSensorSubscribeActivity extends AppCompatActivity {
             @Override
             public void onError(MdsException e) {
                 Log.e(TAG, "ECG Error: " + e.getMessage());
-                switchSubscriptionECG.setChecked(false);
             }
         });
     }
@@ -333,7 +290,6 @@ public class MultiSensorSubscribeActivity extends AppCompatActivity {
             @Override
             public void onError(MdsException e) {
                 Log.e(TAG, "Heart Rate Error: " + e.getMessage());
-                switchSubscriptionHeartRate.setChecked(false);
             }
         });
     }

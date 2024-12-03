@@ -3,7 +3,7 @@
                 xmlns:tools="http://schemas.android.com/tools"
                 android:layout_width="match_parent"
                 android:layout_height="150dp"
-                android:background="@color/colorBackground"
+                android:background="@android:color/white"
                 android:orientation="vertical"
                 android:paddingLeft="20dp"
                 android:paddingRight="20dp">
@@ -21,7 +21,7 @@
         android:layout_height="wrap_content"
         android:layout_alignStart="@+id/movesense_address"
         android:layout_alignTop="@+id/movesense_image"
-        android:textColor="@color/colorText"
+        android:textColor="@color/colorBackground"
         android:textSize="24sp"
         tools:text="@string/Movesense"/>
 
@@ -33,7 +33,7 @@
         android:layout_marginStart="20dp"
         android:layout_marginTop="4dp"
         android:layout_toRightOf="@id/movesense_image"
-        android:textColor="@color/colorText"
+        android:textColor="@color/colorBackground"
         tools:text="21:21:34:21"/>
 
     <TextView
@@ -44,7 +44,7 @@
         android:layout_marginStart="20dp"
         android:layout_marginTop="4dp"
         android:layout_toRightOf="@id/movesense_image"
-        android:textColor="@color/colorText"
+        android:textColor="@color/colorBackground"
         tools:text="40"/>
 
     <View
