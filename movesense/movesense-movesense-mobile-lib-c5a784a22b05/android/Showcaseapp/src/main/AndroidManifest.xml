@@ -90,21 +90,23 @@
         </activity>
 
         <activity
-            android:name=".section_01_movesense.info"
-            android:screenOrientation="portrait">
+            android:name=".section_01_movesense.tests.info"
+            android:screenOrientation="portrait"
+            android:exported="true">
+        <intent-filter>
+            <action android:name="android.intent.action.MAIN"/>
+            <action android:name="android.intent.action.MY_ACTION"/>
 
-        </activity>
+            <category android:name="android.intent.category.LAUNCHER"/>
+        </intent-filter>
+    </activity>
+
+
         <activity
             android:name=".section_01_movesense.MovesenseActivity"
             android:screenOrientation="portrait"
-            android:exported="true">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN"/>
-                <action android:name="android.intent.action.MY_ACTION"/>
+            />
 
-                <category android:name="android.intent.category.LAUNCHER"/>
-            </intent-filter>
-        </activity>
 
 
         <activity
