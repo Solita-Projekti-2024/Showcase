@@ -182,6 +182,19 @@ public class MultiSensorSubscribeActivity extends AppCompatActivity {
         }
     }
 
+    // Method to calculate both pitch and roll, and return the greater absolute angle
+    private float calculateMaxTilt(float accX, float accY, float accZ) {
+        // Calculate pitch (forward/backward tilt)
+        float pitch = (float) Math.toDegrees(Math.atan2(accZ, Math.sqrt(accX * accX + accY * accY)));
+
+        // Calculate roll (left/right tilt)
+        float roll = (float) Math.toDegrees(Math.atan2(accX, Math.sqrt(accY * accY + accZ * accZ)));
+
+        // Return the greater of the two angles (by absolute value)
+        return Math.abs(pitch) > Math.abs(roll) ? pitch : roll;
+    }
+
+
 
     private void subscribeToLinearAcc() {
         String linearAccUri = FormatHelper.formatContractToJson(
@@ -215,8 +228,16 @@ public class MultiSensorSubscribeActivity extends AppCompatActivity {
                     yAxisLinearAccTextView.setText(String.format(Locale.getDefault(), "y: %.6f", filteredY));
                     zAxisLinearAccTextView.setText(String.format(Locale.getDefault(), "z: %.6f", filteredZ));
 
+                    float maxTilt = calculateMaxTilt(filteredX, filteredY, filteredZ);
+
+
+                    runOnUiThread(() -> {
+                        stickmanImage.setRotation(maxTilt);
+                                });
+
+
                     //Check leaning
-                    if (filteredY < 6.5 && filteredY > 3.2) {
+                    /*if (filteredY < 6.5 && filteredY > 3.2) {
                         Log.d(TAG, "Person is leaning");
                         //TÄÄLLÄ PITÄISI JOTAIN TEHDÄ
                         stickmanImage.setRotation(45);
@@ -226,7 +247,7 @@ public class MultiSensorSubscribeActivity extends AppCompatActivity {
                         stickmanImage.setRotation(90);
                     } else {
                         stickmanImage.setRotation(0);
-                    }
+                    }*/
                 }
             }
 
