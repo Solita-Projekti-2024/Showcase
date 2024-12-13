@@ -29,8 +29,14 @@ import com.movesense.showcaseapp.model.HeartRate;
 import com.movesense.showcaseapp.model.LinearAcceleration;
 import com.movesense.showcaseapp.utils.FormatHelper;
 
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.LinkedList;
 import java.util.Locale;
+
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
 public class MultiSensorSubscribeActivity extends AppCompatActivity {
 
@@ -76,12 +82,25 @@ public class MultiSensorSubscribeActivity extends AppCompatActivity {
     private LinkedList<Float> yBuffer = new LinkedList<>();
     private LinkedList<Float> zBuffer = new LinkedList<>();
 
+    private File csvFile;
+    private StringBuilder csvRowBuffer = new StringBuilder();
+
 
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.measurements); // Ensure this matches your XML file name
+
+        // Init CSV
+        csvFile = new File(getExternalFilesDir(null), "sensor_measurements.csv");
+        if (!csvFile.exists()) {
+            try (FileWriter writer = new FileWriter(csvFile, true)) {
+                writer.append("Timestamp*LinearAccX*LinearAccY*LinearAccZ*GyroX*GyroY*GyroZ*HeartRate*ECG\n");
+            } catch (IOException e) {
+                Log.e(TAG, "Error creating CSV", e);
+            }
+        }
 
         // Initialize views based on updated XML layout
         xAxisLinearAccTextView = findViewById(R.id.x_axis_linearAcc_textView);
@@ -124,6 +143,26 @@ public class MultiSensorSubscribeActivity extends AppCompatActivity {
 
     }
 
+    private void logDataToCsv(String linearAccData, String gyroData, String heartRateData, String ecgData) {
+        String timestamp = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS", Locale.getDefault()).format(new Date());
+
+        // Append data to row buffer
+        csvRowBuffer.setLength(0); // Clear previous row
+        csvRowBuffer
+                .append(timestamp).append("*")
+                .append(linearAccData).append("*")
+                .append(gyroData).append("*")
+                .append(heartRateData).append("*")
+                .append(ecgData).append("\n");
+
+        // Write the row to the file
+        try (FileWriter writer = new FileWriter(csvFile, true)) {
+            writer.append(csvRowBuffer.toString());
+        } catch (IOException e) {
+            Log.e(TAG, "Error writing to CSV file", e);
+        }
+    }
+
 
     private void setupEcgGraph() {
         ecgGraphView.addSeries(ecgSeries);
@@ -158,6 +197,11 @@ public class MultiSensorSubscribeActivity extends AppCompatActivity {
                     xAxisGyroTextView.setText(String.format(Locale.getDefault(), "x: %.6f", arrayData.x));
                     yAxisGyroTextView.setText(String.format(Locale.getDefault(), "y: %.6f", arrayData.y));
                     zAxisGyroTextView.setText(String.format(Locale.getDefault(), "z: %.6f", arrayData.z));
+
+                    String gyroDataStr = String.format(Locale.getDefault(), "%.6f*%.6f*%.6f", arrayData.x, arrayData.y, arrayData.z);
+
+                    // Log data with placeholders for other sensors
+                    logDataToCsv("N/A*N/A*N/A", gyroDataStr, "N/A", "N/A");
                 }
             }
 
@@ -230,6 +274,11 @@ public class MultiSensorSubscribeActivity extends AppCompatActivity {
 
                     float maxTilt = calculateMaxTilt(filteredX, filteredY, filteredZ);
 
+                    String linearAccData = String.format(Locale.getDefault(), "%.6f*%.6f*%.6f", filteredX, filteredY, filteredZ);
+
+                    // Log data with placeholders for other sensors
+                    logDataToCsv(linearAccData, "N/A*N/A*N/A", "N/A", "N/A");
+
 
                     runOnUiThread(() -> {
                         stickmanImage.setRotation(maxTilt);
@@ -248,6 +297,9 @@ public class MultiSensorSubscribeActivity extends AppCompatActivity {
                     } else {
                         stickmanImage.setRotation(0);
                     }*/
+
+
+
                 }
             }
 
@@ -281,6 +333,10 @@ public class MultiSensorSubscribeActivity extends AppCompatActivity {
                             ecgDataPoints = 0;
                             ecgSeries.resetData(new DataPoint[0]);
                         }
+                        String ecgDataStr = String.format(Locale.getDefault(), "%d", sample);
+
+                        // Log data with placeholders for other sensors
+                        logDataToCsv("N/A*N/A*N/A", "N/A*N/A*N/A", "N/A", ecgDataStr);
                     }
                 }
             }
@@ -314,6 +370,11 @@ public class MultiSensorSubscribeActivity extends AppCompatActivity {
                 if (heartRate != null) {
                     heartRateTextView.setText(String.format(Locale.getDefault(),
                             "Heart Rate: %.2f bpm", heartRate.body.average));
+
+                    String heartRateData = String.format(Locale.getDefault(), "%.2f", heartRate.body.average);
+
+                    // Log data with placeholders for other sensors
+                    logDataToCsv("N/A*N/A*N/A", "N/A*N/A*N/A", heartRateData, "N/A");
                 }
             }
 
