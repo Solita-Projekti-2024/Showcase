@@ -29,7 +29,9 @@ import com.movesense.showcaseapp.model.HeartRate;
 import com.movesense.showcaseapp.model.LinearAcceleration;
 import com.movesense.showcaseapp.utils.FormatHelper;
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.LinkedList;
@@ -92,11 +94,14 @@ public class MultiSensorSubscribeActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.measurements); // Ensure this matches your XML file name
 
+        // Clean old data from CSV
+        cleanOldCsvData();
+
         // Init CSV
         csvFile = new File(getExternalFilesDir(null), "sensor_measurements.csv");
         if (!csvFile.exists()) {
             try (FileWriter writer = new FileWriter(csvFile, true)) {
-                writer.append("Timestamp*LinearAccX*LinearAccY*LinearAccZ*GyroX*GyroY*GyroZ*HeartRate*ECG\n");
+                writer.append("Timestamp;LinearAccX;LinearAccY;LinearAccZ;GyroX;GyroY;GyroZ;HeartRate;ECG\n");
             } catch (IOException e) {
                 Log.e(TAG, "Error creating CSV", e);
             }
@@ -149,10 +154,10 @@ public class MultiSensorSubscribeActivity extends AppCompatActivity {
         // Append data to row buffer
         csvRowBuffer.setLength(0); // Clear previous row
         csvRowBuffer
-                .append(timestamp).append("*")
-                .append(linearAccData).append("*")
-                .append(gyroData).append("*")
-                .append(heartRateData).append("*")
+                .append(timestamp).append(";")
+                .append(linearAccData).append(";")
+                .append(gyroData).append(";")
+                .append(heartRateData).append(";")
                 .append(ecgData).append("\n");
 
         // Write the row to the file
@@ -160,6 +165,45 @@ public class MultiSensorSubscribeActivity extends AppCompatActivity {
             writer.append(csvRowBuffer.toString());
         } catch (IOException e) {
             Log.e(TAG, "Error writing to CSV file", e);
+        }
+    }
+
+    private void cleanOldCsvData(){
+        File tempFile = new File(getExternalFilesDir(null), "temp_sensor_measurements.csv");
+        long currentTime = System.currentTimeMillis();
+        long twentyFourHoursInMillis = 24 * 60 * 60 * 1000;
+
+        try(BufferedReader reader = new BufferedReader(new FileReader(csvFile));
+        FileWriter writer = new FileWriter(tempFile)){
+
+            String header = reader.readLine();
+            if (header != null){
+                writer.append(header).append("\n");
+            }
+
+            String line;
+            while ((line = reader.readLine()) != null){
+                String[] columns = line.split(";");
+                if (columns.length > 0){
+                    String timeStampStr = columns[0];
+                    SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS", Locale.getDefault());
+                    try{
+                        Date timestamp = dateFormat.parse(timeStampStr);
+                        if (timestamp != null && currentTime - timestamp.getTime() <= twentyFourHoursInMillis){
+                            writer.append(line).append("\n");
+                        }
+
+                    }catch (Exception e){
+                        Log.e(TAG, "Error parsing timestamp: " + timeStampStr, e);
+                    }
+                }
+            }
+        }catch (Exception e){
+            Log.e(TAG, "Error cleaning old CSV data", e);
+        }
+
+        if (tempFile.exists() && csvFile.delete()){
+            tempFile.renameTo(csvFile);
         }
     }
 
@@ -198,10 +242,10 @@ public class MultiSensorSubscribeActivity extends AppCompatActivity {
                     yAxisGyroTextView.setText(String.format(Locale.getDefault(), "y: %.6f", arrayData.y));
                     zAxisGyroTextView.setText(String.format(Locale.getDefault(), "z: %.6f", arrayData.z));
 
-                    String gyroDataStr = String.format(Locale.getDefault(), "%.6f*%.6f*%.6f", arrayData.x, arrayData.y, arrayData.z);
+                    String gyroDataStr = String.format(Locale.getDefault(), "%.6f;%.6f;%.6f", arrayData.x, arrayData.y, arrayData.z);
 
                     // Log data with placeholders for other sensors
-                    logDataToCsv("N/A*N/A*N/A", gyroDataStr, "N/A", "N/A");
+                    logDataToCsv("N/A;N/A;N/A", gyroDataStr, "N/A", "N/A");
                 }
             }
 
@@ -274,10 +318,10 @@ public class MultiSensorSubscribeActivity extends AppCompatActivity {
 
                     float maxTilt = calculateMaxTilt(filteredX, filteredY, filteredZ);
 
-                    String linearAccData = String.format(Locale.getDefault(), "%.6f*%.6f*%.6f", filteredX, filteredY, filteredZ);
+                    String linearAccData = String.format(Locale.getDefault(), "%.6f;%.6f;%.6f", filteredX, filteredY, filteredZ);
 
                     // Log data with placeholders for other sensors
-                    logDataToCsv(linearAccData, "N/A*N/A*N/A", "N/A", "N/A");
+                    logDataToCsv(linearAccData, "N/A;N/A;N/A", "N/A", "N/A");
 
 
                     runOnUiThread(() -> {
@@ -336,7 +380,7 @@ public class MultiSensorSubscribeActivity extends AppCompatActivity {
                         String ecgDataStr = String.format(Locale.getDefault(), "%d", sample);
 
                         // Log data with placeholders for other sensors
-                        logDataToCsv("N/A*N/A*N/A", "N/A*N/A*N/A", "N/A", ecgDataStr);
+                        logDataToCsv("N/A;N/A;N/A", "N/A;N/A;N/A", "N/A", ecgDataStr);
                     }
                 }
             }
@@ -374,7 +418,7 @@ public class MultiSensorSubscribeActivity extends AppCompatActivity {
                     String heartRateData = String.format(Locale.getDefault(), "%.2f", heartRate.body.average);
 
                     // Log data with placeholders for other sensors
-                    logDataToCsv("N/A*N/A*N/A", "N/A*N/A*N/A", heartRateData, "N/A");
+                    logDataToCsv("N/A;N/A;N/A", "N/A;N/A;N/A", heartRateData, "N/A");
                 }
             }
 
