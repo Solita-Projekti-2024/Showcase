@@ -40,6 +40,11 @@ import java.util.Locale;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
+import android.os.Handler;
+import android.os.Looper;
+import androidx.appcompat.app.AlertDialog;
+import android.util.Log;
+
 public class MultiSensorSubscribeActivity extends AppCompatActivity {
 
     private static final String TAG = "MultiSensorSubscribe";
@@ -87,12 +92,22 @@ public class MultiSensorSubscribeActivity extends AppCompatActivity {
     private File csvFile;
     private StringBuilder csvRowBuffer = new StringBuilder();
 
+    private Handler popupHandler;
+    private Runnable alertRunnable;
+    private boolean tiltExceeded = false; // Flag to check if tilt threshold is exceeded
+    private long tiltStartTime = 0;  // To track when the tilt exceeds the threshold
+    private AlertDialog alertDialog;
+
+
 
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.measurements); // Ensure this matches your XML file name
+
+        // Initialize the handler
+        popupHandler = new Handler(Looper.getMainLooper());
 
         // Clean old data from CSV
         cleanOldCsvData();
@@ -224,6 +239,51 @@ public class MultiSensorSubscribeActivity extends AppCompatActivity {
         ecgSeries.setColor(getResources().getColor(R.color.colorGreen));
     }
 
+    // Method to monitor the tilt
+    private void monitorTilt(double tiltValue) {
+        // Define your tilt threshold (e.g., 30 degrees)
+        double tiltThreshold = 30.0;
+
+        if (Math.abs(tiltValue) > tiltThreshold) {
+            if (!tiltExceeded) {
+                tiltExceeded = true;
+                tiltStartTime = System.currentTimeMillis();  // Record the start time of tilt
+            } else {
+                // Check if the tilt has been sustained for 10 seconds
+                if (System.currentTimeMillis() - tiltStartTime >= 10000) {
+                    if (alertDialog == null || !alertDialog.isShowing()) {
+                        showPopup("Tilt threshold exceeded for 10 seconds!");
+                    }}
+            }
+        } else {
+            tiltExceeded = false;  // Reset if tilt goes below threshold
+        }
+    }
+
+    private void sendAlert() {
+        // Logic to send the alert (e.g., send a notification, log an event, etc.)
+        Log.d("MultiSensorSubscribe", "Alert sent!");
+    }
+
+    private void showPopup(String message) {
+        if (alertDialog != null && alertDialog.isShowing()) {
+            // Dialog is already displayed, do not show another
+            return;
+        }
+
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("Alert")
+                .setMessage(message)
+                .setPositiveButton("OK", (dialog, which) -> dialog.dismiss())
+                .setNegativeButton("Cancel", (dialog, which) -> dialog.dismiss());
+
+        alertDialog = builder.create();
+        if (!isFinishing()) {
+            alertDialog.show();
+        }
+    }
+
+
     private void subscribeToGyro() {
         String gyroUri = FormatHelper.formatContractToJson(
                 MovesenseConnectedDevices.getConnectedDevice(0).getSerial(),
@@ -324,6 +384,7 @@ public class MultiSensorSubscribeActivity extends AppCompatActivity {
                     logDataToCsv(linearAccData, "N/A;N/A;N/A", "N/A", "N/A");
 
 
+                    monitorTilt(maxTilt);
                     runOnUiThread(() -> {
                         stickmanImage.setRotation(maxTilt);
                                 });
@@ -459,6 +520,10 @@ public class MultiSensorSubscribeActivity extends AppCompatActivity {
         unsubscribeECG();
         unsubscribeGyro();
         unsubscribeHeartRate(); // Unsubscribe heart rate when destroying activity
+
+        if (popupHandler != null){
+            popupHandler.removeCallbacksAndMessages(null);
+        }
 
 
     }
