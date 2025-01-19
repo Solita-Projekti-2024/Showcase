@@ -109,9 +109,6 @@ public class MultiSensorSubscribeActivity extends AppCompatActivity {
         // Initialize the handler
         popupHandler = new Handler(Looper.getMainLooper());
 
-        // Clean old data from CSV
-        cleanOldCsvData();
-
         // Init CSV
         csvFile = new File(getExternalFilesDir(null), "sensor_measurements.csv");
         if (!csvFile.exists()) {
@@ -121,6 +118,11 @@ public class MultiSensorSubscribeActivity extends AppCompatActivity {
                 Log.e(TAG, "Error creating CSV", e);
             }
         }
+
+        // Clean old data from CSV
+        cleanOldCsvData();
+
+
 
         // Initialize views based on updated XML layout
         xAxisLinearAccTextView = findViewById(R.id.x_axis_linearAcc_textView);
@@ -183,44 +185,52 @@ public class MultiSensorSubscribeActivity extends AppCompatActivity {
         }
     }
 
-    private void cleanOldCsvData(){
+    private void cleanOldCsvData() {
         File tempFile = new File(getExternalFilesDir(null), "temp_sensor_measurements.csv");
         long currentTime = System.currentTimeMillis();
         long twentyFourHoursInMillis = 24 * 60 * 60 * 1000;
 
-        try(BufferedReader reader = new BufferedReader(new FileReader(csvFile));
-        FileWriter writer = new FileWriter(tempFile)){
+        try (BufferedReader reader = new BufferedReader(new FileReader(csvFile));
+             FileWriter writer = new FileWriter(tempFile)) {
 
             String header = reader.readLine();
-            if (header != null){
+            if (header != null) {
                 writer.append(header).append("\n");
             }
 
             String line;
-            while ((line = reader.readLine()) != null){
+            while ((line = reader.readLine()) != null) {
                 String[] columns = line.split(";");
-                if (columns.length > 0){
+                if (columns.length > 0) {
                     String timeStampStr = columns[0];
-                    SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS", Locale.getDefault());
-                    try{
+                    SimpleDateFormat dateFormat;
+
+                    // Handle different timestamp formats
+                    if (timeStampStr.contains("-")) {
+                        dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS", Locale.getDefault());
+                    } else {
+                        dateFormat = new SimpleDateFormat("dd.M.yyyy HH:mm", Locale.getDefault());
+                    }
+
+                    try {
                         Date timestamp = dateFormat.parse(timeStampStr);
-                        if (timestamp != null && currentTime - timestamp.getTime() <= twentyFourHoursInMillis){
+                        if (timestamp != null && currentTime - timestamp.getTime() <= twentyFourHoursInMillis) {
                             writer.append(line).append("\n");
                         }
-
-                    }catch (Exception e){
+                    } catch (Exception e) {
                         Log.e(TAG, "Error parsing timestamp: " + timeStampStr, e);
                     }
                 }
             }
-        }catch (Exception e){
+        } catch (Exception e) {
             Log.e(TAG, "Error cleaning old CSV data", e);
         }
 
-        if (tempFile.exists() && csvFile.delete()){
+        if (tempFile.exists() && csvFile.delete()) {
             tempFile.renameTo(csvFile);
         }
     }
+
 
 
     private void setupEcgGraph() {
@@ -252,7 +262,7 @@ public class MultiSensorSubscribeActivity extends AppCompatActivity {
                 // Check if the tilt has been sustained for 10 seconds
                 if (System.currentTimeMillis() - tiltStartTime >= 10000) {
                     if (alertDialog == null || !alertDialog.isShowing()) {
-                        showPopup("Tilt threshold exceeded for 10 seconds!");
+                        showPopup("Tilt threshold exceeded for 10 seconds!\nHave you fallen?");
                     }}
             }
         } else {
@@ -274,8 +284,8 @@ public class MultiSensorSubscribeActivity extends AppCompatActivity {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setTitle("Alert")
                 .setMessage(message)
-                .setPositiveButton("OK", (dialog, which) -> dialog.dismiss())
-                .setNegativeButton("Cancel", (dialog, which) -> dialog.dismiss());
+                .setPositiveButton("OK (Alarm)", (dialog, which) -> dialog.dismiss())
+                .setNegativeButton("Cancel (No alarm)", (dialog, which) -> dialog.dismiss());
 
         alertDialog = builder.create();
         if (!isFinishing()) {
