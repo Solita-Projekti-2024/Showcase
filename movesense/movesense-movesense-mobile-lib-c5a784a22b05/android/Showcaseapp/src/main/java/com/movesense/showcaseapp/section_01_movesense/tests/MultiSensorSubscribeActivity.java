@@ -97,6 +97,8 @@ public class MultiSensorSubscribeActivity extends AppCompatActivity {
     private boolean tiltExceeded = false; // Flag to check if tilt threshold is exceeded
     private long tiltStartTime = 0;  // To track when the tilt exceeds the threshold
     private AlertDialog alertDialog;
+    private double currentHeartRate = 0.0;
+    private static final double HEART_RATE_THRESHOLD = 120.0;
 
 
 
@@ -120,7 +122,7 @@ public class MultiSensorSubscribeActivity extends AppCompatActivity {
         }
 
         // Clean old data from CSV
-        cleanOldCsvData();
+        //cleanOldCsvData();
 
 
 
@@ -254,7 +256,7 @@ public class MultiSensorSubscribeActivity extends AppCompatActivity {
         // Define your tilt threshold (e.g., 30 degrees)
         double tiltThreshold = 30.0;
 
-        if (Math.abs(tiltValue) > tiltThreshold) {
+        if (Math.abs(tiltValue) > tiltThreshold && currentHeartRate > HEART_RATE_THRESHOLD) {
             if (!tiltExceeded) {
                 tiltExceeded = true;
                 tiltStartTime = System.currentTimeMillis();  // Record the start time of tilt
@@ -262,7 +264,7 @@ public class MultiSensorSubscribeActivity extends AppCompatActivity {
                 // Check if the tilt has been sustained for 10 seconds
                 if (System.currentTimeMillis() - tiltStartTime >= 10000) {
                     if (alertDialog == null || !alertDialog.isShowing()) {
-                        showPopup("Tilt threshold exceeded for 10 seconds!\nHave you fallen?");
+                        showPopup("Korkea syke makuuasennossa havaittu!\nTarvitsetko apua?\n\n'Hätätila! SOS' lähettää hälytyksen\n\n'Olen OK' kuittaa väärän hälytyksen");
                     }}
             }
         } else {
@@ -284,8 +286,8 @@ public class MultiSensorSubscribeActivity extends AppCompatActivity {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setTitle("Alert")
                 .setMessage(message)
-                .setPositiveButton("OK (Alarm)", (dialog, which) -> dialog.dismiss())
-                .setNegativeButton("Cancel (No alarm)", (dialog, which) -> dialog.dismiss());
+                .setPositiveButton("Hätätila! SOS", (dialog, which) -> dialog.dismiss())
+                .setNegativeButton("Olen OK", (dialog, which) -> dialog.dismiss());
 
         alertDialog = builder.create();
         if (!isFinishing()) {
@@ -487,6 +489,7 @@ public class MultiSensorSubscribeActivity extends AppCompatActivity {
                             "Heart Rate: %.2f bpm", heartRate.body.average));
 
                     String heartRateData = String.format(Locale.getDefault(), "%.2f", heartRate.body.average);
+                    currentHeartRate = heartRate.body.average;
 
                     // Log data with placeholders for other sensors
                     logDataToCsv("N/A;N/A;N/A", "N/A;N/A;N/A", heartRateData, "N/A");
