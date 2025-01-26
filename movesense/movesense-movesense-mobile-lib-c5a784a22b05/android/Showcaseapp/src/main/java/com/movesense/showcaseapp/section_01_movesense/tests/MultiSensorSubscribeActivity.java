@@ -99,6 +99,9 @@ public class MultiSensorSubscribeActivity extends AppCompatActivity {
     private AlertDialog alertDialog;
     private double currentHeartRate = 0.0;
     private static final double HEART_RATE_THRESHOLD = 120.0;
+    private boolean gyroThresholdExceeded = false;
+    private long gyroThresholdTime = 0;
+    private static final long MONITOR_DURATION = 1000;
 
 
 
@@ -157,13 +160,6 @@ public class MultiSensorSubscribeActivity extends AppCompatActivity {
         } else {
             Toast.makeText(this, "No connected device found", Toast.LENGTH_SHORT).show();
         }
-
-
-
-
-
-
-
 
     }
 
@@ -296,6 +292,7 @@ public class MultiSensorSubscribeActivity extends AppCompatActivity {
     }
 
 
+
     private void subscribeToGyro() {
         String gyroUri = FormatHelper.formatContractToJson(
                 MovesenseConnectedDevices.getConnectedDevice(0).getSerial(),
@@ -310,9 +307,22 @@ public class MultiSensorSubscribeActivity extends AppCompatActivity {
 
                 if (gyroData != null && gyroData.body != null && gyroData.body.array.length > 0) {
                     AngularVelocity.Array arrayData = gyroData.body.array[0];
+
+                    double gyroX = arrayData.x;
+                    double gyroZ = arrayData.z;
+
                     xAxisGyroTextView.setText(String.format(Locale.getDefault(), "x: %.6f", arrayData.x));
                     yAxisGyroTextView.setText(String.format(Locale.getDefault(), "y: %.6f", arrayData.y));
                     zAxisGyroTextView.setText(String.format(Locale.getDefault(), "z: %.6f", arrayData.z));
+
+                    double gyroThreshold = 200.0;
+                    if(Math.abs(gyroX) > gyroThreshold || Math.abs(gyroZ) > gyroThreshold){
+                        if(!gyroThresholdExceeded){
+                            gyroThresholdExceeded = true;
+                            gyroThresholdTime = System.currentTimeMillis();
+                            Log.d(TAG, "Gyro Threshold exceeded. Start tilt monitor");
+                        }
+                    }
 
                     String gyroDataStr = String.format(Locale.getDefault(), "%.6f;%.6f;%.6f", arrayData.x, arrayData.y, arrayData.z);
 
@@ -390,6 +400,21 @@ public class MultiSensorSubscribeActivity extends AppCompatActivity {
 
                     float maxTilt = calculateMaxTilt(filteredX, filteredY, filteredZ);
 
+                    if (gyroThresholdExceeded){
+                        long elapsedTime = System.currentTimeMillis() - gyroThresholdTime;
+                        if (elapsedTime <= MONITOR_DURATION){
+                            if (Math.abs(maxTilt) > 30.0){
+                                Log.d(TAG, "Tilt threshold exceeded durng fall monitoring");
+                                if(alertDialog == null || !alertDialog.isShowing()){
+                                    showPopup("Kaatuminen havaittu!\nTarvitsetko apua?\n'OLEN OK' kuittaa väärän hälytyksen\n'HÄTÄTILA SOS!' lähettää hälytyksen");
+                                }
+                            }
+                        }else{
+                            gyroThresholdExceeded = false;
+                            Log.d(TAG, "Fall monitoring ended");
+                        }
+                    }
+
                     String linearAccData = String.format(Locale.getDefault(), "%.6f;%.6f;%.6f", filteredX, filteredY, filteredZ);
 
                     // Log data with placeholders for other sensors
@@ -401,19 +426,6 @@ public class MultiSensorSubscribeActivity extends AppCompatActivity {
                         stickmanImage.setRotation(maxTilt);
                                 });
 
-
-                    //Check leaning
-                    /*if (filteredY < 6.5 && filteredY > 3.2) {
-                        Log.d(TAG, "Person is leaning");
-                        //TÄÄLLÄ PITÄISI JOTAIN TEHDÄ
-                        stickmanImage.setRotation(45);
-                    } else if (filteredY <= 3.2) {
-                        Log.d(TAG, "Person is leaning SIGNIFICANTLY or HAS FALLEN");
-                        //VARMAAN JOTAIN PITÄIS TÄÄLLÄKIN TEHDÄ
-                        stickmanImage.setRotation(90);
-                    } else {
-                        stickmanImage.setRotation(0);
-                    }*/
 
 
 
