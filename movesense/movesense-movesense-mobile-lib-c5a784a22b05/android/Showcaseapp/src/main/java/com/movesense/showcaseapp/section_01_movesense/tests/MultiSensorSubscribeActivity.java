@@ -62,20 +62,14 @@ public class MultiSensorSubscribeActivity extends AppCompatActivity {
     // Views
     private MdsSubscription heartRateSubscription;
 
-    private TextView xAxisLinearAccTextView;
-    private TextView yAxisLinearAccTextView;
-    private TextView zAxisLinearAccTextView;
-    private TextView ecgTextView;
+
     private GraphView ecgGraphView;
 
     // ECG Graph
     private LineGraphSeries<DataPoint> ecgSeries;
     private int ecgDataPoints = 0; // Counter for ECG data points
 
-    //GYRO
-    private TextView xAxisGyroTextView;
-    private TextView yAxisGyroTextView;
-    private TextView zAxisGyroTextView;
+
     private MdsSubscription gyroSubscription;
 
     // HR
@@ -130,17 +124,19 @@ public class MultiSensorSubscribeActivity extends AppCompatActivity {
 
 
         // Initialize views based on updated XML layout
-        xAxisLinearAccTextView = findViewById(R.id.x_axis_linearAcc_textView);
+/*        xAxisLinearAccTextView = findViewById(R.id.x_axis_linearAcc_textView);
         yAxisLinearAccTextView = findViewById(R.id.y_axis_linearAcc_textView);
-        zAxisLinearAccTextView = findViewById(R.id.z_axis_linearAcc_textView);
+        zAxisLinearAccTextView = findViewById(R.id.z_axis_linearAcc_textView);*/
 
+/*
         ecgGraphView = findViewById(R.id.ecg_graph_view);
+*/
 
         heartRateTextView = findViewById(R.id.heart_rate_textView);
 
-        xAxisGyroTextView = findViewById(R.id.x_axis_gyro_textView);
+/*        xAxisGyroTextView = findViewById(R.id.x_axis_gyro_textView);
         yAxisGyroTextView = findViewById(R.id.y_axis_gyro_textView);
-        zAxisGyroTextView = findViewById(R.id.z_axis_gyro_textView);
+        zAxisGyroTextView = findViewById(R.id.z_axis_gyro_textView);*/
 
 
         // ECG Graph initialization
@@ -292,7 +288,6 @@ public class MultiSensorSubscribeActivity extends AppCompatActivity {
     }
 
 
-
     private void subscribeToGyro() {
         String gyroUri = FormatHelper.formatContractToJson(
                 MovesenseConnectedDevices.getConnectedDevice(0).getSerial(),
@@ -311,9 +306,9 @@ public class MultiSensorSubscribeActivity extends AppCompatActivity {
                     double gyroX = arrayData.x;
                     double gyroZ = arrayData.z;
 
-                    xAxisGyroTextView.setText(String.format(Locale.getDefault(), "x: %.6f", arrayData.x));
+/*                    xAxisGyroTextView.setText(String.format(Locale.getDefault(), "x: %.6f", arrayData.x));
                     yAxisGyroTextView.setText(String.format(Locale.getDefault(), "y: %.6f", arrayData.y));
-                    zAxisGyroTextView.setText(String.format(Locale.getDefault(), "z: %.6f", arrayData.z));
+                    zAxisGyroTextView.setText(String.format(Locale.getDefault(), "z: %.6f", arrayData.z));*/
 
                     double gyroThreshold = 200.0;
                     if(Math.abs(gyroX) > gyroThreshold || Math.abs(gyroZ) > gyroThreshold){
@@ -394,9 +389,9 @@ public class MultiSensorSubscribeActivity extends AppCompatActivity {
                     float filteredY = calculateMedian(yBuffer);
                     float filteredZ = calculateMedian(zBuffer);
 
-                    xAxisLinearAccTextView.setText(String.format(Locale.getDefault(), "x: %.6f", filteredX));
+/*                    xAxisLinearAccTextView.setText(String.format(Locale.getDefault(), "x: %.6f", filteredX));
                     yAxisLinearAccTextView.setText(String.format(Locale.getDefault(), "y: %.6f", filteredY));
-                    zAxisLinearAccTextView.setText(String.format(Locale.getDefault(), "z: %.6f", filteredZ));
+                    zAxisLinearAccTextView.setText(String.format(Locale.getDefault(), "z: %.6f", filteredZ));*/
 
                     float maxTilt = calculateMaxTilt(filteredX, filteredY, filteredZ);
 

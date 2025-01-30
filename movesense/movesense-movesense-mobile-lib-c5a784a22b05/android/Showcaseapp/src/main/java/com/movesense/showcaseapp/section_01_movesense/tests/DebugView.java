@@ -1,9 +1,11 @@
 package com.movesense.showcaseapp.section_01_movesense.tests;
 
+import android.app.UiAutomation;
 import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
 import android.widget.CompoundButton;
+import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -27,8 +29,21 @@ import com.movesense.showcaseapp.model.HeartRate;
 import com.movesense.showcaseapp.model.LinearAcceleration;
 import com.movesense.showcaseapp.utils.FormatHelper;
 
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.LinkedList;
 import java.util.Locale;
+
+import java.text.SimpleDateFormat;
+import java.util.Date;
+
+import android.os.Handler;
+import android.os.Looper;
+import androidx.appcompat.app.AlertDialog;
+import android.util.Log;
 
 public class DebugView extends AppCompatActivity {
 
@@ -45,8 +60,6 @@ public class DebugView extends AppCompatActivity {
     private MdsSubscription ecgSubscription;
 
     // Views
-    private SwitchCompat switchSubscriptionLinearAcc;
-    private SwitchCompat switchSubscriptionECG;
     private MdsSubscription heartRateSubscription;
 
     private TextView xAxisLinearAccTextView;
@@ -60,14 +73,12 @@ public class DebugView extends AppCompatActivity {
     private int ecgDataPoints = 0; // Counter for ECG data points
 
     //GYRO
-    private SwitchCompat switchSubscriptionGyro;
     private TextView xAxisGyroTextView;
     private TextView yAxisGyroTextView;
     private TextView zAxisGyroTextView;
     private MdsSubscription gyroSubscription;
 
     // HR
-    private SwitchCompat switchSubscriptionHeartRate; // New switch for heart rate
     private TextView heartRateTextView; // TextView for heart rate
 
     // Define window size for the median filter
@@ -78,89 +89,147 @@ public class DebugView extends AppCompatActivity {
     private LinkedList<Float> yBuffer = new LinkedList<>();
     private LinkedList<Float> zBuffer = new LinkedList<>();
 
+    private File csvFile;
+    private StringBuilder csvRowBuffer = new StringBuilder();
+
+    private Handler popupHandler;
+    private Runnable alertRunnable;
+    private boolean tiltExceeded = false; // Flag to check if tilt threshold is exceeded
+    private long tiltStartTime = 0;  // To track when the tilt exceeds the threshold
+    private AlertDialog alertDialog;
+    private double currentHeartRate = 0.0;
+    private static final double HEART_RATE_THRESHOLD = 120.0;
+    private boolean gyroThresholdExceeded = false;
+    private long gyroThresholdTime = 0;
+    private static final long MONITOR_DURATION = 1000;
+
+
 
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_multi_sensor_subscribe);
+        setContentView(R.layout.measurements); // Ensure this matches your XML file name
 
-        // Initialize views
-        switchSubscriptionLinearAcc = findViewById(R.id.switchSubscriptionLinearAcc);
-        switchSubscriptionECG = findViewById(R.id.switchSubscriptionECG);
-        xAxisLinearAccTextView = findViewById(R.id.x_axis_linearAcc_textView);
+        // Initialize the handler
+        popupHandler = new Handler(Looper.getMainLooper());
+
+        // Init CSV
+        csvFile = new File(getExternalFilesDir(null), "sensor_measurements.csv");
+        if (!csvFile.exists()) {
+            try (FileWriter writer = new FileWriter(csvFile, true)) {
+                writer.append("Timestamp;LinearAccX;LinearAccY;LinearAccZ;GyroX;GyroY;GyroZ;HeartRate;ECG\n");
+            } catch (IOException e) {
+                Log.e(TAG, "Error creating CSV", e);
+            }
+        }
+
+        // Clean old data from CSV
+        //cleanOldCsvData();
+
+
+
+        // Initialize views based on updated XML layout
+/*        xAxisLinearAccTextView = findViewById(R.id.x_axis_linearAcc_textView);
         yAxisLinearAccTextView = findViewById(R.id.y_axis_linearAcc_textView);
-        zAxisLinearAccTextView = findViewById(R.id.z_axis_linearAcc_textView);
-        ecgGraphView = findViewById(R.id.ecg_graph_view);
-        switchSubscriptionHeartRate = findViewById(R.id.switchSubscriptionHeartRate); // Initialize the new switch
-        heartRateTextView = findViewById(R.id.heart_rate_textView); // TextView for heart rate
+        zAxisLinearAccTextView = findViewById(R.id.z_axis_linearAcc_textView);*/
 
-        // Initialize ECG Graph
+        ecgGraphView = findViewById(R.id.ecg_graph_view);
+
+        heartRateTextView = findViewById(R.id.heart_rate_textView);
+
+/*        xAxisGyroTextView = findViewById(R.id.x_axis_gyro_textView);
+        yAxisGyroTextView = findViewById(R.id.y_axis_gyro_textView);
+        zAxisGyroTextView = findViewById(R.id.z_axis_gyro_textView);*/
+
+
+        // ECG Graph initialization
         ecgSeries = new LineGraphSeries<>();
         setupEcgGraph();
 
-        switchSubscriptionGyro = findViewById(R.id.switchSubscriptionGyro);
-        xAxisGyroTextView = findViewById(R.id.x_axis_gyro_textView);
-        yAxisGyroTextView = findViewById(R.id.y_axis_gyro_textView);
-        zAxisGyroTextView = findViewById(R.id.z_axis_gyro_textView);
 
 
-        // Handle Linear Acceleration subscription toggle
-        switchSubscriptionLinearAcc.setOnCheckedChangeListener((buttonView, isChecked) -> {
-            if (isChecked) {
-                if (MovesenseConnectedDevices.getConnectedDevices().size() > 0) {
-                    subscribeToLinearAcc();
-                } else {
-                    Toast.makeText(this, "No connected device found", Toast.LENGTH_SHORT).show();
-                    switchSubscriptionLinearAcc.setChecked(false);
-                }
-            } else {
-                unsubscribeLinearAcc();
-            }
-        });
+        // Automatically enable subscriptions
+        if (MovesenseConnectedDevices.getConnectedDevices().size() > 0) {
+            subscribeToLinearAcc();
+            subscribeToECG();
+            subscribeToGyro();
+            subscribeToHeartRate();
 
-        // Handle ECG subscription toggle
-        switchSubscriptionECG.setOnCheckedChangeListener((buttonView, isChecked) -> {
-            if (isChecked) {
-                if (MovesenseConnectedDevices.getConnectedDevices().size() > 0) {
-                    subscribeToECG();
-                } else {
-                    Toast.makeText(this, "No connected device found", Toast.LENGTH_SHORT).show();
-                    switchSubscriptionECG.setChecked(false);
-                }
-            } else {
-                unsubscribeECG();
-            }
-        });
 
-        // GYRO Subscription
-        switchSubscriptionGyro.setOnCheckedChangeListener((buttonView, isChecked) -> {
-            if (isChecked) {
-                if (MovesenseConnectedDevices.getConnectedDevices().size() > 0) {
-                    subscribeToGyro();
-                } else {
-                    Toast.makeText(this, "No connected device found", Toast.LENGTH_SHORT).show();
-                    switchSubscriptionGyro.setChecked(false);
-                }
-            } else {
-                unsubscribeGyro();
-            }
-        });
-        // Handle Heart Rate subscription toggle
-        switchSubscriptionHeartRate.setOnCheckedChangeListener((buttonView, isChecked) -> {
-            if (isChecked) {
-                if (MovesenseConnectedDevices.getConnectedDevices().size() > 0) {
-                    subscribeToHeartRate();
-                } else {
-                    Toast.makeText(this, "No connected device found", Toast.LENGTH_SHORT).show();
-                    switchSubscriptionHeartRate.setChecked(false);
-                }
-            } else {
-                unsubscribeHeartRate();
-            }
-        });
+        } else {
+            Toast.makeText(this, "No connected device found", Toast.LENGTH_SHORT).show();
+        }
 
     }
+
+    private void logDataToCsv(String linearAccData, String gyroData, String heartRateData, String ecgData) {
+        String timestamp = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS", Locale.getDefault()).format(new Date());
+
+        // Append data to row buffer
+        csvRowBuffer.setLength(0); // Clear previous row
+        csvRowBuffer
+                .append(timestamp).append(";")
+                .append(linearAccData).append(";")
+                .append(gyroData).append(";")
+                .append(heartRateData).append(";")
+                .append(ecgData).append("\n");
+
+        // Write the row to the file
+        try (FileWriter writer = new FileWriter(csvFile, true)) {
+            writer.append(csvRowBuffer.toString());
+        } catch (IOException e) {
+            Log.e(TAG, "Error writing to CSV file", e);
+        }
+    }
+
+    private void cleanOldCsvData() {
+        File tempFile = new File(getExternalFilesDir(null), "temp_sensor_measurements.csv");
+        long currentTime = System.currentTimeMillis();
+        long twentyFourHoursInMillis = 24 * 60 * 60 * 1000;
+
+        try (BufferedReader reader = new BufferedReader(new FileReader(csvFile));
+             FileWriter writer = new FileWriter(tempFile)) {
+
+            String header = reader.readLine();
+            if (header != null) {
+                writer.append(header).append("\n");
+            }
+
+            String line;
+            while ((line = reader.readLine()) != null) {
+                String[] columns = line.split(";");
+                if (columns.length > 0) {
+                    String timeStampStr = columns[0];
+                    SimpleDateFormat dateFormat;
+
+                    // Handle different timestamp formats
+                    if (timeStampStr.contains("-")) {
+                        dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS", Locale.getDefault());
+                    } else {
+                        dateFormat = new SimpleDateFormat("dd.M.yyyy HH:mm", Locale.getDefault());
+                    }
+
+                    try {
+                        Date timestamp = dateFormat.parse(timeStampStr);
+                        if (timestamp != null && currentTime - timestamp.getTime() <= twentyFourHoursInMillis) {
+                            writer.append(line).append("\n");
+                        }
+                    } catch (Exception e) {
+                        Log.e(TAG, "Error parsing timestamp: " + timeStampStr, e);
+                    }
+                }
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "Error cleaning old CSV data", e);
+        }
+
+        if (tempFile.exists() && csvFile.delete()) {
+            tempFile.renameTo(csvFile);
+        }
+    }
+
+
 
     private void setupEcgGraph() {
         ecgGraphView.addSeries(ecgSeries);
@@ -178,6 +247,51 @@ public class DebugView extends AppCompatActivity {
         ecgSeries.setColor(getResources().getColor(R.color.colorGreen));
     }
 
+    // Method to monitor the tilt
+    private void monitorTilt(double tiltValue) {
+        // Define your tilt threshold (e.g., 30 degrees)
+        double tiltThreshold = 30.0;
+
+        if (Math.abs(tiltValue) > tiltThreshold && currentHeartRate > HEART_RATE_THRESHOLD) {
+            if (!tiltExceeded) {
+                tiltExceeded = true;
+                tiltStartTime = System.currentTimeMillis();  // Record the start time of tilt
+            } else {
+                // Check if the tilt has been sustained for 10 seconds
+                if (System.currentTimeMillis() - tiltStartTime >= 10000) {
+                    if (alertDialog == null || !alertDialog.isShowing()) {
+                        showPopup("Korkea syke makuuasennossa havaittu!\nTarvitsetko apua?\n\n'Hätätila! SOS' lähettää hälytyksen\n\n'Olen OK' kuittaa väärän hälytyksen");
+                    }}
+            }
+        } else {
+            tiltExceeded = false;  // Reset if tilt goes below threshold
+        }
+    }
+
+    private void sendAlert() {
+        // Logic to send the alert (e.g., send a notification, log an event, etc.)
+        Log.d("MultiSensorSubscribe", "Alert sent!");
+    }
+
+    private void showPopup(String message) {
+        if (alertDialog != null && alertDialog.isShowing()) {
+            // Dialog is already displayed, do not show another
+            return;
+        }
+
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("Alert")
+                .setMessage(message)
+                .setPositiveButton("Hätätila! SOS", (dialog, which) -> dialog.dismiss())
+                .setNegativeButton("Olen OK", (dialog, which) -> dialog.dismiss());
+
+        alertDialog = builder.create();
+        if (!isFinishing()) {
+            alertDialog.show();
+        }
+    }
+
+
     private void subscribeToGyro() {
         String gyroUri = FormatHelper.formatContractToJson(
                 MovesenseConnectedDevices.getConnectedDevice(0).getSerial(),
@@ -192,16 +306,33 @@ public class DebugView extends AppCompatActivity {
 
                 if (gyroData != null && gyroData.body != null && gyroData.body.array.length > 0) {
                     AngularVelocity.Array arrayData = gyroData.body.array[0];
+
+                    double gyroX = arrayData.x;
+                    double gyroZ = arrayData.z;
+
                     xAxisGyroTextView.setText(String.format(Locale.getDefault(), "x: %.6f", arrayData.x));
                     yAxisGyroTextView.setText(String.format(Locale.getDefault(), "y: %.6f", arrayData.y));
                     zAxisGyroTextView.setText(String.format(Locale.getDefault(), "z: %.6f", arrayData.z));
+
+                    double gyroThreshold = 200.0;
+                    if(Math.abs(gyroX) > gyroThreshold || Math.abs(gyroZ) > gyroThreshold){
+                        if(!gyroThresholdExceeded){
+                            gyroThresholdExceeded = true;
+                            gyroThresholdTime = System.currentTimeMillis();
+                            Log.d(TAG, "Gyro Threshold exceeded. Start tilt monitor");
+                        }
+                    }
+
+                    String gyroDataStr = String.format(Locale.getDefault(), "%.6f;%.6f;%.6f", arrayData.x, arrayData.y, arrayData.z);
+
+                    // Log data with placeholders for other sensors
+                    logDataToCsv("N/A;N/A;N/A", gyroDataStr, "N/A", "N/A");
                 }
             }
 
             @Override
             public void onError(MdsException e) {
                 Log.e(TAG, "Gyro Error: " + e.getMessage());
-                switchSubscriptionGyro.setChecked(false);
             }
         });
     }
@@ -220,6 +351,19 @@ public class DebugView extends AppCompatActivity {
         }
     }
 
+    // Method to calculate both pitch and roll, and return the greater absolute angle
+    private float calculateMaxTilt(float accX, float accY, float accZ) {
+        // Calculate pitch (forward/backward tilt)
+        float pitch = (float) Math.toDegrees(Math.atan2(accZ, Math.sqrt(accX * accX + accY * accY)));
+
+        // Calculate roll (left/right tilt)
+        float roll = (float) Math.toDegrees(Math.atan2(accX, Math.sqrt(accY * accY + accZ * accZ)));
+
+        // Return the greater of the two angles (by absolute value)
+        return Math.abs(pitch) > Math.abs(roll) ? pitch : roll;
+    }
+
+
 
     private void subscribeToLinearAcc() {
         String linearAccUri = FormatHelper.formatContractToJson(
@@ -230,6 +374,8 @@ public class DebugView extends AppCompatActivity {
             @Override
             public void onNotification(String data) {
                 Log.d(TAG, "Linear Acceleration Data: " + data);
+                ImageView stickmanImage = findViewById(R.id.image_stickman);
+
                 LinearAcceleration linearAccelerationData = new Gson().fromJson(data, LinearAcceleration.class);
                 if (linearAccelerationData != null) {
                     LinearAcceleration.Array arrayData = linearAccelerationData.body.array[0];
@@ -251,21 +397,43 @@ public class DebugView extends AppCompatActivity {
                     yAxisLinearAccTextView.setText(String.format(Locale.getDefault(), "y: %.6f", filteredY));
                     zAxisLinearAccTextView.setText(String.format(Locale.getDefault(), "z: %.6f", filteredZ));
 
-                    //Check leaning
-                    if (filteredY < 6.5 && filteredY > 3.2) {
-                        Log.d(TAG, "Person is leaning");
-                        //TÄÄLLÄ PITÄISI JOTAIN TEHDÄ
-                    } else if (filteredY <= 3.2) {
-                        Log.d(TAG, "Person is leaning SIGNIFICANTLY or HAS FALLEN");
-                        //VARMAAN JOTAIN PITÄIS TÄÄLLÄKIN TEHDÄ
+                    float maxTilt = calculateMaxTilt(filteredX, filteredY, filteredZ);
+
+                    if (gyroThresholdExceeded){
+                        long elapsedTime = System.currentTimeMillis() - gyroThresholdTime;
+                        if (elapsedTime <= MONITOR_DURATION){
+                            if (Math.abs(maxTilt) > 30.0){
+                                Log.d(TAG, "Tilt threshold exceeded durng fall monitoring");
+                                if(alertDialog == null || !alertDialog.isShowing()){
+                                    showPopup("Kaatuminen havaittu!\nTarvitsetko apua?\n'OLEN OK' kuittaa väärän hälytyksen\n'HÄTÄTILA SOS!' lähettää hälytyksen");
+                                }
+                            }
+                        }else{
+                            gyroThresholdExceeded = false;
+                            Log.d(TAG, "Fall monitoring ended");
+                        }
                     }
+
+                    String linearAccData = String.format(Locale.getDefault(), "%.6f;%.6f;%.6f", filteredX, filteredY, filteredZ);
+
+                    // Log data with placeholders for other sensors
+                    logDataToCsv(linearAccData, "N/A;N/A;N/A", "N/A", "N/A");
+
+
+                    monitorTilt(maxTilt);
+                    runOnUiThread(() -> {
+                        stickmanImage.setRotation(maxTilt);
+                    });
+
+
+
+
                 }
             }
 
             @Override
             public void onError(MdsException e) {
                 Log.e(TAG, "Linear Acc Error: " + e.getMessage());
-                switchSubscriptionLinearAcc.setChecked(false);
             }
         });
     }
@@ -293,6 +461,10 @@ public class DebugView extends AppCompatActivity {
                             ecgDataPoints = 0;
                             ecgSeries.resetData(new DataPoint[0]);
                         }
+                        String ecgDataStr = String.format(Locale.getDefault(), "%d", sample);
+
+                        // Log data with placeholders for other sensors
+                        logDataToCsv("N/A;N/A;N/A", "N/A;N/A;N/A", "N/A", ecgDataStr);
                     }
                 }
             }
@@ -300,7 +472,6 @@ public class DebugView extends AppCompatActivity {
             @Override
             public void onError(MdsException e) {
                 Log.e(TAG, "ECG Error: " + e.getMessage());
-                switchSubscriptionECG.setChecked(false);
             }
         });
     }
@@ -327,13 +498,18 @@ public class DebugView extends AppCompatActivity {
                 if (heartRate != null) {
                     heartRateTextView.setText(String.format(Locale.getDefault(),
                             "Heart Rate: %.2f bpm", heartRate.body.average));
+
+                    String heartRateData = String.format(Locale.getDefault(), "%.2f", heartRate.body.average);
+                    currentHeartRate = heartRate.body.average;
+
+                    // Log data with placeholders for other sensors
+                    logDataToCsv("N/A;N/A;N/A", "N/A;N/A;N/A", heartRateData, "N/A");
                 }
             }
 
             @Override
             public void onError(MdsException e) {
                 Log.e(TAG, "Heart Rate Error: " + e.getMessage());
-                switchSubscriptionHeartRate.setChecked(false);
             }
         });
     }
@@ -368,6 +544,10 @@ public class DebugView extends AppCompatActivity {
         unsubscribeECG();
         unsubscribeGyro();
         unsubscribeHeartRate(); // Unsubscribe heart rate when destroying activity
+
+        if (popupHandler != null){
+            popupHandler.removeCallbacksAndMessages(null);
+        }
 
 
     }
