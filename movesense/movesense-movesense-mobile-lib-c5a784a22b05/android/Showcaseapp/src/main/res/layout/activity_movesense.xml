@@ -4,7 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/colorBackground"
+    android:background="@drawable/tausta"
     android:gravity="center"
     android:orientation="vertical"
     tools:context=".section_01_movesense.MovesenseActivity">
@@ -29,7 +29,6 @@
         android:visibility="gone"/>
 
     <androidx.recyclerview.widget.RecyclerView
-        android:background="@color/colorBackground"
         android:id="@+id/movesense_recyclerView"
         android:layout_width="match_parent"
         android:layout_height="match_parent"

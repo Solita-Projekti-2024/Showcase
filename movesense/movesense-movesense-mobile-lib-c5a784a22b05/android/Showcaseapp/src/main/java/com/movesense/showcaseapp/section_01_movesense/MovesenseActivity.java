@@ -33,7 +33,6 @@ import com.movesense.showcaseapp.model.MdsConnectedDevice;
 import com.movesense.showcaseapp.model.MdsDeviceInfoNewSw;
 import com.movesense.showcaseapp.model.MdsDeviceInfoOldSw;
 import com.movesense.showcaseapp.model.RxBleDeviceWrapper;
-import com.movesense.showcaseapp.section_01_movesense.sensors.sensors_list.SensorListActivity;
 import com.movesense.showcaseapp.section_01_movesense.tests.MultiSensorSubscribeActivity;
 import com.movesense.showcaseapp.utils.ThrowableToastingAction;
 import com.polidea.rxandroidble2.RxBleDevice;
@@ -73,9 +72,7 @@ public class MovesenseActivity extends AppCompatActivity implements MovesenseCon
         setContentView(R.layout.bt_connection);
         ButterKnife.bind(this);
 
-        if (getSupportActionBar() != null) {
-            getSupportActionBar().setTitle("Movesense Connection");
-        }
+
 
         scanningSubscriptions = new CompositeDisposable();
         connectedDevicesSubscriptions = new CompositeDisposable();

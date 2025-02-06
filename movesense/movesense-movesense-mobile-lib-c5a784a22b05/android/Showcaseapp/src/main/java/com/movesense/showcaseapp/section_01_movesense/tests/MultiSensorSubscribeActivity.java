@@ -141,7 +141,7 @@ public class MultiSensorSubscribeActivity extends AppCompatActivity {
 
         // ECG Graph initialization
         ecgSeries = new LineGraphSeries<>();
-        setupEcgGraph();
+        //setupEcgGraph();
 
 
 

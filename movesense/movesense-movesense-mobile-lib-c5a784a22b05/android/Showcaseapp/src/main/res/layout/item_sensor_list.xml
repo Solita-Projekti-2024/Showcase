@@ -4,7 +4,8 @@
               android:layout_width="match_parent"
               android:layout_height="80dp"
               android:orientation="vertical"
-              tools:background="@color/colorBackground">
+              android:background="@drawable/tausta"
+    >
 
     <TextView
         android:id="@+id/item_sensorList_textView"
