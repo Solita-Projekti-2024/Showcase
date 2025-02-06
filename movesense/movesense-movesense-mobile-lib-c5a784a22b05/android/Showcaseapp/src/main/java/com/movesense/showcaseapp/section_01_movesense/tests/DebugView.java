@@ -109,7 +109,7 @@ public class DebugView extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.measurements); // Ensure this matches your XML file name
+        setContentView(R.layout.activity_multi_sensor_subscribe); // Ensure this matches your XML file name
 
         // Initialize the handler
         popupHandler = new Handler(Looper.getMainLooper());

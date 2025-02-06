@@ -30,28 +30,9 @@
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
         android:supportsRtl="true"
-        android:theme="@style/AppTheme">
-        <activity
-            android:name=".section_01_movesense.tests.LedTestActivity"
-            android:screenOrientation="portrait"/>
-        <activity
-            android:name=".section_01_movesense.tests.LinearAccelerationTestActivity"
-            android:screenOrientation="portrait"/>
-        <activity
-            android:name=".section_01_movesense.tests.HeartRateTestActivity"
-            android:screenOrientation="portrait"/>
-        <activity
-            android:name=".section_01_movesense.tests.TemperatureTestActivity"
-            android:screenOrientation="portrait"/>
-        <activity
-            android:name=".section_01_movesense.tests.MagneticFieldTestActivity"
-            android:screenOrientation="portrait"/>
-        <activity
-            android:name=".section_01_movesense.tests.AngularVelocityActivity"
-            android:screenOrientation="portrait"/>
-        <activity
-            android:name=".section_01_movesense.tests.MultiSubscribeActivity"
-            android:screenOrientation="portrait"/>
+        android:theme="@style/Theme.AppCompat.Light.NoActionBar">
+
+
         <activity
             android:name=".google_drive.SendLogsToGoogleDriveActivity"
             android:screenOrientation="portrait"/>
@@ -92,7 +73,8 @@
         <activity
             android:name=".section_01_movesense.tests.info"
             android:screenOrientation="portrait"
-            android:exported="true">
+            android:exported="true"
+            >
         <intent-filter>
             <action android:name="android.intent.action.MAIN"/>
             <action android:name="android.intent.action.MY_ACTION"/>
@@ -109,50 +91,22 @@
 
 
 
-        <activity
-            android:name=".section_02_multi_connection.connection.MultiConnectionActivity"
-            android:screenOrientation="portrait"/>
+
         <activity
             android:name=".section_04_saved_data.SavedDataActivity"
             android:screenOrientation="portrait"/>
         <activity
             android:name=".section_06_about.AboutActivity"
             android:screenOrientation="portrait"/>
-        <activity
-            android:name=".section_01_movesense.sensors.sensors_list.SensorListActivity"
-            android:screenOrientation="portrait">
-        </activity>
+
         <activity
             android:name=".section_03_dfu.DfuActivity2"
             android:screenOrientation="portrait">
         </activity>
-        <activity
-            android:name=".section_02_multi_connection.sensor_usage.MultiSensorUsageActivity"
-            android:screenOrientation="portrait">
-        </activity>
-        <activity
-            android:name=".section_01_movesense.tests.EcgActivity"
-            android:screenOrientation="portrait"
-            android:configChanges="keyboardHidden|orientation|screenSize">
-        </activity>
 
-        <activity
-            android:name=".section_01_movesense.tests.EcgActivityGraphView"
-            android:screenOrientation="portrait"
-            android:configChanges="keyboardHidden|orientation|screenSize">
-        </activity>
-        <activity
-            android:name=".section_01_movesense.tests.BatteryActivity"
-            android:screenOrientation="portrait">
-        </activity>
-        <activity
-            android:name=".section_01_movesense.tests.AppInfoActivity"
-            android:screenOrientation="portrait">
-        </activity>
-        <activity
-            android:name=".section_01_movesense.tests.ImuActivity"
-            android:screenOrientation="portrait">
-        </activity>
+
+
+
 
         <receiver
             android:name=".bluetooth.BluetoothStatusReceiver"

@@ -9,9 +9,7 @@ import android.widget.TextView;
 
 import com.movesense.showcaseapp.BuildConfig;
 import com.movesense.showcaseapp.R;
-import com.movesense.showcaseapp.google_drive.SendLogsToGoogleDriveActivity;
 import com.movesense.showcaseapp.section_01_movesense.MovesenseActivity;
-import com.movesense.showcaseapp.section_03_dfu.DfuActivity2;
 
 import com.movesense.mds.Mds;
 import com.movesense.mds.MdsException;
@@ -82,12 +80,8 @@ public class MainViewActivity extends AppCompatActivity {
                 startActivity(new Intent(MainViewActivity.this, MovesenseActivity.class));
                 break;
 
-            case R.id.mainView_dfu_Ll:
-                startActivity(new Intent(MainViewActivity.this, DfuActivity2.class));
-                break;
-            case R.id.mainView_savedData_Ll:
-                startActivity(new Intent(MainViewActivity.this, SendLogsToGoogleDriveActivity.class));
-                break;
+
+
         }
     }
 }
