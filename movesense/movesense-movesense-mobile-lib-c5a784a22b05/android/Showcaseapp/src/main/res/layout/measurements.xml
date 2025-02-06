@@ -6,6 +6,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:padding="16dp"
+    android:background="@drawable/sumennus"
     tools:context=".section_01_movesense.tests.MultiSensorSubscribeActivity">
 
     <!-- Title TextView -->
@@ -16,6 +17,7 @@
         android:text="Sensor Data"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintStart_toStartOf="parent"
+        android:background="@drawable/round_edges"
         app:layout_constraintEnd_toEndOf="parent" />
 
     <!-- Sensor Data Horizontal Container -->
@@ -28,6 +30,7 @@
         android:layout_marginTop="10dp"
         app:layout_constraintTop_toBottomOf="@id/tv_sensor_data"
         app:layout_constraintStart_toStartOf="parent"
+        android:background="@drawable/round_edges"
         app:layout_constraintEnd_toEndOf="parent">
 
         <!-- Linear Acceleration TextViews -->
@@ -42,12 +45,14 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:orientation="vertical"
+            android:background="@drawable/round_edges"
             android:padding="8dp">
 
             <TextView
                 android:id="@+id/heart_rate_textView"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:background="@drawable/round_edges"
                 android:text="Heart Rate: " />
         </LinearLayout>
     </LinearLayout>
@@ -62,7 +67,7 @@
         android:layout_height="158dp"
         android:layout_marginTop="10dp"
         android:src="@drawable/stickman"
-        app:layout_constraintTop_toBottomOf="@id/ecg_container"
+        app:layout_constraintTop_toBottomOf="@id/data_row"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent" />
     <!-- Back Button -->
@@ -74,6 +79,7 @@
         android:text="Takaisin"
         app:layout_constraintTop_toBottomOf="@id/image_stickman"
         app:layout_constraintStart_toStartOf="parent"
+        android:background="@drawable/round_edges"
         app:layout_constraintEnd_toEndOf="parent" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
