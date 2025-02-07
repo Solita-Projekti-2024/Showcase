@@ -58,13 +58,7 @@
                 android:layout_marginStart="10dp"
                 android:text="Linear Acc"/>
 
-            <androidx.appcompat.widget.SwitchCompat
-                android:id="@+id/switchSubscriptionLinearAcc"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:paddingLeft="5dp"
-                android:text="@string/off_on"
-                android:checked="false"/>
+
 
             <TextView
                 android:id="@+id/x_axis_linearAcc_textView"
@@ -105,13 +99,7 @@
                 android:layout_marginStart="10dp"
                 android:text="ECG"/>
 
-            <androidx.appcompat.widget.SwitchCompat
-                android:id="@+id/switchSubscriptionECG"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:paddingLeft="5dp"
-                android:text="@string/off_on"
-                android:checked="false"/>
+
 
             <!-- Heart Rate -->
             <TextView
@@ -120,13 +108,7 @@
                 android:layout_marginStart="10dp"
                 android:text="Heart Rate"/>
 
-            <androidx.appcompat.widget.SwitchCompat
-                android:id="@+id/switchSubscriptionHeartRate"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:paddingLeft="5dp"
-                android:text="@string/off_on"
-                android:checked="false"/>
+
             <TextView
                 android:id="@+id/heart_rate_textView"
                 android:layout_width="wrap_content"
@@ -150,13 +132,7 @@
                 android:layout_marginStart="10dp"
                 android:text="Gyroscope"/>
 
-            <androidx.appcompat.widget.SwitchCompat
-                android:id="@+id/switchSubscriptionGyro"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:paddingLeft="5dp"
-                android:text="@string/off_on"
-                android:checked="false"/>
+
 
             <TextView
                 android:id="@+id/x_axis_gyro_textView"
@@ -196,5 +172,19 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="@string/multisubscribe_note_text"/>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"/>
+
+    <!-- Takaisin button -->
+    <Button
+        android:id="@+id/back_button"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Takaisin"
+        android:layout_marginTop="20dp"
+        android:layout_gravity="center" />
 
 </LinearLayout>

@@ -1,6 +1,7 @@
 package com.movesense.showcaseapp.section_01_movesense.tests;
 
 import android.app.UiAutomation;
+import android.content.Intent;
 import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
@@ -44,6 +45,10 @@ import android.os.Handler;
 import android.os.Looper;
 import androidx.appcompat.app.AlertDialog;
 import android.util.Log;
+
+import android.view.View;
+import android.widget.Button;
+
 
 public class MultiSensorSubscribeActivity extends AppCompatActivity {
 
@@ -96,6 +101,7 @@ public class MultiSensorSubscribeActivity extends AppCompatActivity {
     private boolean gyroThresholdExceeded = false;
     private long gyroThresholdTime = 0;
     private static final long MONITOR_DURATION = 1000;
+    private boolean alertAcknowledged = false;
 
 
 
@@ -107,6 +113,25 @@ public class MultiSensorSubscribeActivity extends AppCompatActivity {
 
         // Initialize the handler
         popupHandler = new Handler(Looper.getMainLooper());
+
+        Button btnBack3 = findViewById(R.id.btn_back3);
+
+        btnBack3.setOnClickListener(new View.OnClickListener(){
+            @Override
+            public void onClick(View v){
+                onDestroy();
+            }
+        });
+
+        Button fullDataButton = findViewById(R.id.full_data);
+
+        fullDataButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(getApplicationContext(), DebugView.class);
+                startActivity(intent);
+            }
+        });
 
         // Init CSV
         csvFile = new File(getExternalFilesDir(null), "sensor_measurements.csv");
@@ -245,28 +270,37 @@ public class MultiSensorSubscribeActivity extends AppCompatActivity {
 
     // Method to monitor the tilt
     private void monitorTilt(double tiltValue) {
-        // Define your tilt threshold (e.g., 30 degrees)
         double tiltThreshold = 30.0;
 
-        if (Math.abs(tiltValue) > tiltThreshold && currentHeartRate > HEART_RATE_THRESHOLD) {
+        // Always check if the tilt is above the threshold, regardless of heart rate
+        if (Math.abs(tiltValue) > tiltThreshold) {
+            // Check if the tilt threshold is exceeded for the first time or if it's been reset
             if (!tiltExceeded) {
                 tiltExceeded = true;
                 tiltStartTime = System.currentTimeMillis();  // Record the start time of tilt
             } else {
                 // Check if the tilt has been sustained for 10 seconds
                 if (System.currentTimeMillis() - tiltStartTime >= 10000) {
-                    if (alertDialog == null || !alertDialog.isShowing()) {
-                        showPopup("Korkea syke makuuasennossa havaittu!\nTarvitsetko apua?\n\n'Hätätila! SOS' lähettää hälytyksen\n\n'Olen OK' kuittaa väärän hälytyksen");
-                    }}
+                    // Only show the popup if not already acknowledged and not showing
+                    if (!alertAcknowledged && (alertDialog == null || !alertDialog.isShowing())) {
+                        // Modify the message based on the heart rate condition
+                        String message = currentHeartRate > HEART_RATE_THRESHOLD ?
+                                "Korkea syke makuuasennossa havaittu!\nTarvitsetko apua?\n\n'Hätätila! SOS' lähettää hälytyksen\n\n'Olen OK' kuittaa väärän hälytyksen" :
+                                "Esteetön kaatuminen havaittu.\nTarvitsetko apua?\n\n'Hätätila! SOS' lähettää hälytyksen\n\n'Olen OK' kuittaa väärän hälytyksen";
+
+                        showPopup(message);
+                    }
+                }
             }
         } else {
-            tiltExceeded = false;  // Reset if tilt goes below threshold
+            // Reset tiltExceeded when the condition is no longer met
+            if (alertDialog != null && alertDialog.isShowing()) {
+                alertDialog.dismiss();
+                alertDialog = null;
+            }
+            alertAcknowledged = false;
+            tiltExceeded = false;  // Reset the flag when tilt goes below threshold
         }
-    }
-
-    private void sendAlert() {
-        // Logic to send the alert (e.g., send a notification, log an event, etc.)
-        Log.d("MultiSensorSubscribe", "Alert sent!");
     }
 
     private void showPopup(String message) {
@@ -278,14 +312,33 @@ public class MultiSensorSubscribeActivity extends AppCompatActivity {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setTitle("Alert")
                 .setMessage(message)
-                .setPositiveButton("Hätätila! SOS", (dialog, which) -> dialog.dismiss())
-                .setNegativeButton("Olen OK", (dialog, which) -> dialog.dismiss());
+                .setPositiveButton("Hätätila! SOS", (dialog, which) -> {
+                    dialog.dismiss();
+                    sendAlert();  // Send alert when SOS is pressed
+                })
+                .setNegativeButton("Olen OK", (dialog, which) -> {
+                    alertAcknowledged = true;
+                    dialog.dismiss();
+                    alertDialog = null;
+                    tiltExceeded = false; // Reset the tilt flag after the alert is acknowledged
+                });
 
         alertDialog = builder.create();
         if (!isFinishing()) {
             alertDialog.show();
         }
     }
+
+
+
+
+    private void sendAlert() {
+        // Logic to send the alert (e.g., send a notification, log an event, etc.)
+        Log.d("MultiSensorSubscribe", "Alert sent!");
+    }
+
+
+
 
 
     private void subscribeToGyro() {
@@ -297,7 +350,7 @@ public class MultiSensorSubscribeActivity extends AppCompatActivity {
         gyroSubscription = Mds.builder().build(this).subscribe(URI_EVENTLISTENER, gyroUri, new MdsNotificationListener() {
             @Override
             public void onNotification(String data) {
-                Log.d(TAG, "Gyro Data: " + data);
+                //Log.d(TAG, "Gyro Data: " + data);
                 AngularVelocity gyroData = new Gson().fromJson(data, AngularVelocity.class);
 
                 if (gyroData != null && gyroData.body != null && gyroData.body.array.length > 0) {
@@ -369,7 +422,7 @@ public class MultiSensorSubscribeActivity extends AppCompatActivity {
         linearAccSubscription = Mds.builder().build(this).subscribe(URI_EVENTLISTENER, linearAccUri, new MdsNotificationListener() {
             @Override
             public void onNotification(String data) {
-                Log.d(TAG, "Linear Acceleration Data: " + data);
+                //Log.d(TAG, "Linear Acceleration Data: " + data);
                 ImageView stickmanImage = findViewById(R.id.image_stickman);
 
                 LinearAcceleration linearAccelerationData = new Gson().fromJson(data, LinearAcceleration.class);
@@ -402,6 +455,7 @@ public class MultiSensorSubscribeActivity extends AppCompatActivity {
                                 Log.d(TAG, "Tilt threshold exceeded durng fall monitoring");
                                 if(alertDialog == null || !alertDialog.isShowing()){
                                     showPopup("Kaatuminen havaittu!\nTarvitsetko apua?\n'OLEN OK' kuittaa väärän hälytyksen\n'HÄTÄTILA SOS!' lähettää hälytyksen");
+                                    tiltExceeded = false;
                                 }
                             }
                         }else{
@@ -442,7 +496,7 @@ public class MultiSensorSubscribeActivity extends AppCompatActivity {
         ecgSubscription = Mds.builder().build(this).subscribe(URI_EVENTLISTENER, ecgUri, new MdsNotificationListener() {
             @Override
             public void onNotification(String data) {
-                Log.d(TAG, "ECG Data: " + data);
+                //Log.d(TAG, "ECG Data: " + data);
 
                 EcgModel ecgData = new Gson().fromJson(data, EcgModel.class);
                 if (ecgData != null && ecgData.getBody() != null) {
@@ -488,7 +542,7 @@ public class MultiSensorSubscribeActivity extends AppCompatActivity {
         heartRateSubscription = Mds.builder().build(this).subscribe(URI_EVENTLISTENER, heartRateUri, new MdsNotificationListener() {
             @Override
             public void onNotification(String data) {
-                Log.d(TAG, "Heart Rate Data: " + data);
+                //Log.d(TAG, "Heart Rate Data: " + data);
                 HeartRate heartRate = new Gson().fromJson(data, HeartRate.class);
 
                 if (heartRate != null) {

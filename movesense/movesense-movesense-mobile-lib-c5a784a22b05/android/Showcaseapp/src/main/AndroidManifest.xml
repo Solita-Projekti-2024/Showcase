@@ -127,6 +127,12 @@
             android:name=".section_01_movesense.tests.MemoryDiagnosticActivity"
             android:screenOrientation="portrait">
         </activity>
+
+        <activity android:name=".section_01_movesense.tests.DebugView">
+            <!-- Optional: Define other attributes like theme, launch mode, etc. -->
+        </activity>
+
+
     </application>
 
 </manifest>

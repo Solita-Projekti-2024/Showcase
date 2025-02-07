@@ -4,6 +4,8 @@ import android.app.UiAutomation;
 import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.View;
+import android.widget.Button;
 import android.widget.CompoundButton;
 import android.widget.ImageView;
 import android.widget.TextView;
@@ -92,16 +94,7 @@ public class DebugView extends AppCompatActivity {
     private File csvFile;
     private StringBuilder csvRowBuffer = new StringBuilder();
 
-    private Handler popupHandler;
-    private Runnable alertRunnable;
-    private boolean tiltExceeded = false; // Flag to check if tilt threshold is exceeded
-    private long tiltStartTime = 0;  // To track when the tilt exceeds the threshold
-    private AlertDialog alertDialog;
-    private double currentHeartRate = 0.0;
-    private static final double HEART_RATE_THRESHOLD = 120.0;
-    private boolean gyroThresholdExceeded = false;
-    private long gyroThresholdTime = 0;
-    private static final long MONITOR_DURATION = 1000;
+
 
 
 
@@ -111,8 +104,16 @@ public class DebugView extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_multi_sensor_subscribe); // Ensure this matches your XML file name
 
-        // Initialize the handler
-        popupHandler = new Handler(Looper.getMainLooper());
+
+        Button backButton = findViewById(R.id.back_button);
+        backButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                // Go back to the previous activity
+                onBackPressed();
+            }
+        });
+
 
         // Init CSV
         csvFile = new File(getExternalFilesDir(null), "sensor_measurements.csv");
@@ -130,17 +131,17 @@ public class DebugView extends AppCompatActivity {
 
 
         // Initialize views based on updated XML layout
-/*        xAxisLinearAccTextView = findViewById(R.id.x_axis_linearAcc_textView);
+        xAxisLinearAccTextView = findViewById(R.id.x_axis_linearAcc_textView);
         yAxisLinearAccTextView = findViewById(R.id.y_axis_linearAcc_textView);
-        zAxisLinearAccTextView = findViewById(R.id.z_axis_linearAcc_textView);*/
+        zAxisLinearAccTextView = findViewById(R.id.z_axis_linearAcc_textView);
 
         ecgGraphView = findViewById(R.id.ecg_graph_view);
 
         heartRateTextView = findViewById(R.id.heart_rate_textView);
 
-/*        xAxisGyroTextView = findViewById(R.id.x_axis_gyro_textView);
+        xAxisGyroTextView = findViewById(R.id.x_axis_gyro_textView);
         yAxisGyroTextView = findViewById(R.id.y_axis_gyro_textView);
-        zAxisGyroTextView = findViewById(R.id.z_axis_gyro_textView);*/
+        zAxisGyroTextView = findViewById(R.id.z_axis_gyro_textView);
 
 
         // ECG Graph initialization
@@ -238,8 +239,8 @@ public class DebugView extends AppCompatActivity {
         ecgGraphView.getViewport().setMaxX(500);
 
         ecgGraphView.getViewport().setYAxisBoundsManual(true);
-        ecgGraphView.getViewport().setMinY(-5000);
-        ecgGraphView.getViewport().setMaxY(5000);
+        ecgGraphView.getViewport().setMinY(-2500);
+        ecgGraphView.getViewport().setMaxY(2500);
 
         ecgGraphView.getViewport().setScrollable(false);
         ecgGraphView.getViewport().setScrollableY(false);
@@ -248,48 +249,11 @@ public class DebugView extends AppCompatActivity {
     }
 
     // Method to monitor the tilt
-    private void monitorTilt(double tiltValue) {
-        // Define your tilt threshold (e.g., 30 degrees)
-        double tiltThreshold = 30.0;
 
-        if (Math.abs(tiltValue) > tiltThreshold && currentHeartRate > HEART_RATE_THRESHOLD) {
-            if (!tiltExceeded) {
-                tiltExceeded = true;
-                tiltStartTime = System.currentTimeMillis();  // Record the start time of tilt
-            } else {
-                // Check if the tilt has been sustained for 10 seconds
-                if (System.currentTimeMillis() - tiltStartTime >= 10000) {
-                    if (alertDialog == null || !alertDialog.isShowing()) {
-                        showPopup("Korkea syke makuuasennossa havaittu!\nTarvitsetko apua?\n\n'Hätätila! SOS' lähettää hälytyksen\n\n'Olen OK' kuittaa väärän hälytyksen");
-                    }}
-            }
-        } else {
-            tiltExceeded = false;  // Reset if tilt goes below threshold
-        }
-    }
 
-    private void sendAlert() {
-        // Logic to send the alert (e.g., send a notification, log an event, etc.)
-        Log.d("MultiSensorSubscribe", "Alert sent!");
-    }
 
-    private void showPopup(String message) {
-        if (alertDialog != null && alertDialog.isShowing()) {
-            // Dialog is already displayed, do not show another
-            return;
-        }
 
-        AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setTitle("Alert")
-                .setMessage(message)
-                .setPositiveButton("Hätätila! SOS", (dialog, which) -> dialog.dismiss())
-                .setNegativeButton("Olen OK", (dialog, which) -> dialog.dismiss());
 
-        alertDialog = builder.create();
-        if (!isFinishing()) {
-            alertDialog.show();
-        }
-    }
 
 
     private void subscribeToGyro() {
@@ -314,14 +278,7 @@ public class DebugView extends AppCompatActivity {
                     yAxisGyroTextView.setText(String.format(Locale.getDefault(), "y: %.6f", arrayData.y));
                     zAxisGyroTextView.setText(String.format(Locale.getDefault(), "z: %.6f", arrayData.z));
 
-                    double gyroThreshold = 200.0;
-                    if(Math.abs(gyroX) > gyroThreshold || Math.abs(gyroZ) > gyroThreshold){
-                        if(!gyroThresholdExceeded){
-                            gyroThresholdExceeded = true;
-                            gyroThresholdTime = System.currentTimeMillis();
-                            Log.d(TAG, "Gyro Threshold exceeded. Start tilt monitor");
-                        }
-                    }
+
 
                     String gyroDataStr = String.format(Locale.getDefault(), "%.6f;%.6f;%.6f", arrayData.x, arrayData.y, arrayData.z);
 
@@ -399,20 +356,7 @@ public class DebugView extends AppCompatActivity {
 
                     float maxTilt = calculateMaxTilt(filteredX, filteredY, filteredZ);
 
-                    if (gyroThresholdExceeded){
-                        long elapsedTime = System.currentTimeMillis() - gyroThresholdTime;
-                        if (elapsedTime <= MONITOR_DURATION){
-                            if (Math.abs(maxTilt) > 30.0){
-                                Log.d(TAG, "Tilt threshold exceeded durng fall monitoring");
-                                if(alertDialog == null || !alertDialog.isShowing()){
-                                    showPopup("Kaatuminen havaittu!\nTarvitsetko apua?\n'OLEN OK' kuittaa väärän hälytyksen\n'HÄTÄTILA SOS!' lähettää hälytyksen");
-                                }
-                            }
-                        }else{
-                            gyroThresholdExceeded = false;
-                            Log.d(TAG, "Fall monitoring ended");
-                        }
-                    }
+
 
                     String linearAccData = String.format(Locale.getDefault(), "%.6f;%.6f;%.6f", filteredX, filteredY, filteredZ);
 
@@ -420,10 +364,7 @@ public class DebugView extends AppCompatActivity {
                     logDataToCsv(linearAccData, "N/A;N/A;N/A", "N/A", "N/A");
 
 
-                    monitorTilt(maxTilt);
-                    runOnUiThread(() -> {
-                        stickmanImage.setRotation(maxTilt);
-                    });
+
 
 
 
@@ -500,7 +441,6 @@ public class DebugView extends AppCompatActivity {
                             "Heart Rate: %.2f bpm", heartRate.body.average));
 
                     String heartRateData = String.format(Locale.getDefault(), "%.2f", heartRate.body.average);
-                    currentHeartRate = heartRate.body.average;
 
                     // Log data with placeholders for other sensors
                     logDataToCsv("N/A;N/A;N/A", "N/A;N/A;N/A", heartRateData, "N/A");
@@ -545,9 +485,6 @@ public class DebugView extends AppCompatActivity {
         unsubscribeGyro();
         unsubscribeHeartRate(); // Unsubscribe heart rate when destroying activity
 
-        if (popupHandler != null){
-            popupHandler.removeCallbacksAndMessages(null);
-        }
 
 
     }
