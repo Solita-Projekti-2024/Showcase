@@ -112,8 +112,8 @@ public class MultiSensorSubscribeActivity extends AppCompatActivity {
     private String classifyActivity(float accX, float accY, float accZ) {
 
 
-        float uprightLowerThreshold = 9.5f;
-        float uprightUpperThreshold = 10.5f;
+        float uprightLowerThreshold = 9.2f;
+        float uprightUpperThreshold = 10.4f;
 
         if (accY >= uprightLowerThreshold && accY <= uprightUpperThreshold) {
             return "Upright";
@@ -239,33 +239,24 @@ public class MultiSensorSubscribeActivity extends AppCompatActivity {
 
         // Always check if the tilt is above the threshold, regardless of heart rate
         if (Math.abs(tiltValue) > tiltThreshold) {
-            // Check if the tilt threshold is exceeded for the first time or if it's been reset
             if (!tiltExceeded) {
                 tiltExceeded = true;
-                tiltStartTime = System.currentTimeMillis();  // Record the start time of tilt
-            } else {
-                // Check if the tilt has been sustained for 10 seconds
-                if (System.currentTimeMillis() - tiltStartTime >= 10000) {
-                    // Only show the popup if not already acknowledged and not showing
-                    if (!alertAcknowledged && (alertDialog == null || !alertDialog.isShowing())) {
-                        // Modify the message based on the heart rate condition
-                        String message = currentHeartRate > HEART_RATE_THRESHOLD ?
-                                "Korkea syke makuuasennossa havaittu!\nTarvitsetko apua?\n\n'Hätätila! SOS' lähettää hälytyksen\n\n'Olen OK' kuittaa väärän hälytyksen" :
-                                "Esteetön kaatuminen havaittu.\nTarvitsetko apua?\n\n'Hätätila! SOS' lähettää hälytyksen\n\n'Olen OK' kuittaa väärän hälytyksen";
-
-                        showPopup(message);
-                    }
+                tiltStartTime = System.currentTimeMillis();
+            } else if (System.currentTimeMillis() - tiltStartTime >= 10000) {
+                if (!alertAcknowledged && (alertDialog == null || !alertDialog.isShowing()) && currentHeartRate > HEART_RATE_THRESHOLD) {
+                    String message = "Korkea syke makuuasennossa havaittu!\nTarvitsetko apua?\n\n'Hätätila! SOS' lähettää hälytyksen\n\n'Olen OK' kuittaa väärän hälytyksen";
+                    showPopup(message);
                 }
             }
         } else {
-            // Reset tiltExceeded when the condition is no longer met
             if (alertDialog != null && alertDialog.isShowing()) {
                 alertDialog.dismiss();
                 alertDialog = null;
             }
             alertAcknowledged = false;
-            tiltExceeded = false;  // Reset the flag when tilt goes below threshold
+            tiltExceeded = false;
         }
+
     }
 
     private void showPopup(String message) {
@@ -450,6 +441,20 @@ public class MultiSensorSubscribeActivity extends AppCompatActivity {
                                 "Time in Upright: " + uprightHours + " hours " + uprightMinutes + " minutes " + uprightSeconds + " seconds\n" +
                                 "Time in Walking: " + walkingHours + " hours " + walkingMinutes + " minutes " + walkingSeconds + " seconds",
                         Toast.LENGTH_LONG).show();
+                // Find TextViews for status boxes
+                TextView lyingTimeTextView = findViewById(R.id.status_makuulla_time);
+                TextView uprightTimeTextView = findViewById(R.id.status_pystyssa_time);
+                TextView walkingTimeTextView = findViewById(R.id.status_aktiivinen_time);
+
+                // Format time as HH:mm:ss
+                String lyingTimeFormatted = String.format(Locale.getDefault(), "%02d:%02d:%02d", lyingHours, lyingMinutes, lyingSeconds);
+                String uprightTimeFormatted = String.format(Locale.getDefault(), "%02d:%02d:%02d", uprightHours, uprightMinutes, uprightSeconds);
+                String walkingTimeFormatted = String.format(Locale.getDefault(), "%02d:%02d:%02d", walkingHours, walkingMinutes, walkingSeconds);
+
+                // Update the TextViews
+                lyingTimeTextView.setText(lyingTimeFormatted);
+                uprightTimeTextView.setText(uprightTimeFormatted);
+                walkingTimeTextView.setText(walkingTimeFormatted);
             });
         });
 
@@ -620,7 +625,7 @@ public class MultiSensorSubscribeActivity extends AppCompatActivity {
 
                 if (heartRate != null) {
                     heartRateTextView.setText(String.format(Locale.getDefault(),
-                            "Heart Rate: %.2f bpm", heartRate.body.average));
+                            "  Heart Rate: %.2f bpm", heartRate.body.average));
 
                     String heartRateData = String.format(Locale.getDefault(), "%.2f", heartRate.body.average);
                     currentHeartRate = heartRate.body.average;
