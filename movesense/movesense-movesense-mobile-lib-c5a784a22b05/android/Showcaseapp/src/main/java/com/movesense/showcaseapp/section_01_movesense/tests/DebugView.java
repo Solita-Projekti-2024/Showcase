@@ -236,11 +236,11 @@ public class DebugView extends AppCompatActivity {
         ecgGraphView.addSeries(ecgSeries);
         ecgGraphView.getViewport().setXAxisBoundsManual(true);
         ecgGraphView.getViewport().setMinX(0);
-        ecgGraphView.getViewport().setMaxX(500);
+        ecgGraphView.getViewport().setMaxX(400);
 
         ecgGraphView.getViewport().setYAxisBoundsManual(true);
-        ecgGraphView.getViewport().setMinY(-2500);
-        ecgGraphView.getViewport().setMaxY(2500);
+        ecgGraphView.getViewport().setMinY(-2000);
+        ecgGraphView.getViewport().setMaxY(2000);
 
         ecgGraphView.getViewport().setScrollable(false);
         ecgGraphView.getViewport().setScrollableY(false);

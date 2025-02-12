@@ -103,6 +103,11 @@ public class MultiSensorSubscribeActivity extends AppCompatActivity {
     private long gyroThresholdTime = 0;
     private static final long MONITOR_DURATION = 1000;
     private boolean alertAcknowledged = false;
+    private File linearAccFile;
+    private File gyroFile;
+    private File heartRateFile;
+    private File ecgFile;
+
 
     private String classifyActivity(float accX, float accY, float accZ) {
 
@@ -116,6 +121,20 @@ public class MultiSensorSubscribeActivity extends AppCompatActivity {
             return "Lying";
         } else {
             return "Walking";
+        }
+    }
+
+
+    private void initializeCsvFile(File file, String header) {
+        try {
+            if (!file.exists()) {
+                FileWriter writer = new FileWriter(file);
+                writer.append(header);
+                writer.flush();
+                writer.close();
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
         }
     }
 
@@ -163,39 +182,27 @@ public class MultiSensorSubscribeActivity extends AppCompatActivity {
 
 
         // Init CSV
-        csvFile = new File(getExternalFilesDir(null), "sensor_measurements.csv");
-        if (!csvFile.exists()) {
-            try (FileWriter writer = new FileWriter(csvFile, true)) {
-                writer.append("Timestamp;LinearAccX;LinearAccY;LinearAccZ;GyroX;GyroY;GyroZ;HeartRate;ECG\n");
-            } catch (IOException e) {
-                Log.e(TAG, "Error creating CSV", e);
-            }
-        }
+        linearAccFile = new File(getExternalFilesDir(null), "linear_acceleration.csv");
+        gyroFile = new File(getExternalFilesDir(null), "gyroscope.csv");
+        heartRateFile = new File(getExternalFilesDir(null), "heart_rate.csv");
+        ecgFile = new File(getExternalFilesDir(null), "ecg.csv");
 
-        // Clean old data from CSV
-        //cleanOldCsvData();
-
+        // Initialize CSV files with headers if they don’t exist
+        initializeCsvFile(linearAccFile, "Timestamp;LinearAccX;LinearAccY;LinearAccZ\n");
+        initializeCsvFile(gyroFile, "Timestamp;GyroX;GyroY;GyroZ\n");
+        initializeCsvFile(heartRateFile, "Timestamp;HeartRate\n");
+        initializeCsvFile(ecgFile, "Timestamp;ECG\n");
 
 
-        // Initialize views based on updated XML layout
-/*        xAxisLinearAccTextView = findViewById(R.id.x_axis_linearAcc_textView);
-        yAxisLinearAccTextView = findViewById(R.id.y_axis_linearAcc_textView);
-        zAxisLinearAccTextView = findViewById(R.id.z_axis_linearAcc_textView);*/
 
-/*
-        ecgGraphView = findViewById(R.id.ecg_graph_view);
-*/
 
         heartRateTextView = findViewById(R.id.heart_rate_textView);
 
-/*        xAxisGyroTextView = findViewById(R.id.x_axis_gyro_textView);
-        yAxisGyroTextView = findViewById(R.id.y_axis_gyro_textView);
-        zAxisGyroTextView = findViewById(R.id.z_axis_gyro_textView);*/
+
 
 
         // ECG Graph initialization
         ecgSeries = new LineGraphSeries<>();
-        //setupEcgGraph();
 
 
 
@@ -213,89 +220,18 @@ public class MultiSensorSubscribeActivity extends AppCompatActivity {
 
     }
 
-    private void logDataToCsv(String linearAccData, String gyroData, String heartRateData, String ecgData) {
+    private void logDataToCsv(File file, String data) {
         String timestamp = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS", Locale.getDefault()).format(new Date());
 
-        // Append data to row buffer
-        csvRowBuffer.setLength(0); // Clear previous row
-        csvRowBuffer
-                .append(timestamp).append(";")
-                .append(linearAccData).append(";")
-                .append(gyroData).append(";")
-                .append(heartRateData).append(";")
-                .append(ecgData).append("\n");
-
-        // Write the row to the file
-        try (FileWriter writer = new FileWriter(csvFile, true)) {
-            writer.append(csvRowBuffer.toString());
+        try (FileWriter writer = new FileWriter(file, true)) {
+            writer.append(timestamp).append(";").append(data).append("\n");
         } catch (IOException e) {
-            Log.e(TAG, "Error writing to CSV file", e);
-        }
-    }
-
-    private void cleanOldCsvData() {
-        File tempFile = new File(getExternalFilesDir(null), "temp_sensor_measurements.csv");
-        long currentTime = System.currentTimeMillis();
-        long twentyFourHoursInMillis = 24 * 60 * 60 * 1000;
-
-        try (BufferedReader reader = new BufferedReader(new FileReader(csvFile));
-             FileWriter writer = new FileWriter(tempFile)) {
-
-            String header = reader.readLine();
-            if (header != null) {
-                writer.append(header).append("\n");
-            }
-
-            String line;
-            while ((line = reader.readLine()) != null) {
-                String[] columns = line.split(";");
-                if (columns.length > 0) {
-                    String timeStampStr = columns[0];
-                    SimpleDateFormat dateFormat;
-
-                    // Handle different timestamp formats
-                    if (timeStampStr.contains("-")) {
-                        dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS", Locale.getDefault());
-                    } else {
-                        dateFormat = new SimpleDateFormat("dd.M.yyyy HH:mm", Locale.getDefault());
-                    }
-
-                    try {
-                        Date timestamp = dateFormat.parse(timeStampStr);
-                        if (timestamp != null && currentTime - timestamp.getTime() <= twentyFourHoursInMillis) {
-                            writer.append(line).append("\n");
-                        }
-                    } catch (Exception e) {
-                        Log.e(TAG, "Error parsing timestamp: " + timeStampStr, e);
-                    }
-                }
-            }
-        } catch (Exception e) {
-            Log.e(TAG, "Error cleaning old CSV data", e);
-        }
-
-        if (tempFile.exists() && csvFile.delete()) {
-            tempFile.renameTo(csvFile);
+            Log.e(TAG, "Error writing to " + file.getName(), e);
         }
     }
 
 
 
-    private void setupEcgGraph() {
-        ecgGraphView.addSeries(ecgSeries);
-        ecgGraphView.getViewport().setXAxisBoundsManual(true);
-        ecgGraphView.getViewport().setMinX(0);
-        ecgGraphView.getViewport().setMaxX(500);
-
-        ecgGraphView.getViewport().setYAxisBoundsManual(true);
-        ecgGraphView.getViewport().setMinY(-5000);
-        ecgGraphView.getViewport().setMaxY(5000);
-
-        ecgGraphView.getViewport().setScrollable(false);
-        ecgGraphView.getViewport().setScrollableY(false);
-
-        ecgSeries.setColor(getResources().getColor(R.color.colorGreen));
-    }
 
     // Method to monitor the tilt
     private void monitorTilt(double tiltValue) {
@@ -402,9 +338,7 @@ public class MultiSensorSubscribeActivity extends AppCompatActivity {
                     }
 
                     String gyroDataStr = String.format(Locale.getDefault(), "%.6f;%.6f;%.6f", arrayData.x, arrayData.y, arrayData.z);
-
-                    // Log data with placeholders for other sensors
-                    logDataToCsv("N/A;N/A;N/A", gyroDataStr, "N/A", "N/A");
+                    logDataToCsv(gyroFile, gyroDataStr);
                 }
             }
 
@@ -432,11 +366,11 @@ public class MultiSensorSubscribeActivity extends AppCompatActivity {
                     "d.M.yyyy  HH:mm:ss"      // Format 2: 8.2.2025 10:15:02
             };
 
-            try (BufferedReader reader = new BufferedReader(new FileReader(csvFile))) {
+            try (BufferedReader reader = new BufferedReader(new FileReader(linearAccFile))) {
                 String line;
                 while ((line = reader.readLine()) != null && keepRunning) { // Check flag here
                     String[] columns = line.split(";");
-                    if (columns.length > 4) {
+                    if (columns.length >= 4) {
                         String timestampStr = columns[0];
                         Date timestamp = null;
 
@@ -605,10 +539,8 @@ public class MultiSensorSubscribeActivity extends AppCompatActivity {
                         }
                     }
 
-                    String linearAccData = String.format(Locale.getDefault(), "%.6f;%.6f;%.6f", filteredX, filteredY, filteredZ);
-
-                    // Log data with placeholders for other sensors
-                    logDataToCsv(linearAccData, "N/A;N/A;N/A", "N/A", "N/A");
+                    String linearAccData = String.format(Locale.getDefault(), "%.6f;%.6f;%.6f", arrayData.x, arrayData.y, arrayData.z);
+                    logDataToCsv(linearAccFile, linearAccData);
 
 
                     monitorTilt(maxTilt);
@@ -655,7 +587,7 @@ public class MultiSensorSubscribeActivity extends AppCompatActivity {
                         String ecgDataStr = String.format(Locale.getDefault(), "%d", sample);
 
                         // Log data with placeholders for other sensors
-                        logDataToCsv("N/A;N/A;N/A", "N/A;N/A;N/A", "N/A", ecgDataStr);
+                        logDataToCsv(ecgFile, ecgDataStr);
                     }
                 }
             }
@@ -694,7 +626,7 @@ public class MultiSensorSubscribeActivity extends AppCompatActivity {
                     currentHeartRate = heartRate.body.average;
 
                     // Log data with placeholders for other sensors
-                    logDataToCsv("N/A;N/A;N/A", "N/A;N/A;N/A", heartRateData, "N/A");
+                    logDataToCsv(heartRateFile, heartRateData);
                 }
             }
 
