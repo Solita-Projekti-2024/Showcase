@@ -17,36 +17,47 @@
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        android:layout_marginBottom="16dp" />
+        android:layout_marginBottom="16dp"
+        android:textColor="@color/colorText"
+        />
 
     <EditText
         android:id="@+id/et_input1"
         android:layout_width="0dp"
         android:layout_height="48dp"
         android:hint="Nimi"
+        android:textColorHint="@color/colorText"
         app:layout_constraintTop_toBottomOf="@id/tv_title"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent" />
+        app:layout_constraintEnd_toEndOf="parent"
+        android:textColor="@color/colorText"
+        />
 
     <EditText
         android:id="@+id/et_input2"
         android:layout_width="0dp"
         android:layout_height="48dp"
         android:hint="Sähköposti"
+        android:textColorHint="@color/colorText"
         app:layout_constraintTop_toBottomOf="@id/et_input1"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        android:layout_marginTop="8dp" />
+        android:layout_marginTop="8dp"
+        android:textColor="@color/colorText"
+        />
 
     <EditText
         android:id="@+id/et_input3"
         android:layout_width="0dp"
         android:layout_height="48dp"
         android:hint="Puhelin"
+        android:textColorHint="@color/colorText"
         app:layout_constraintTop_toBottomOf="@id/et_input2"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        android:layout_marginTop="8dp" />
+        android:layout_marginTop="8dp"
+        android:textColor="@color/colorText"
+        />
 
     <Button
         android:id="@+id/btn_next"

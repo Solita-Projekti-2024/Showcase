@@ -625,7 +625,7 @@ public class MultiSensorSubscribeActivity extends AppCompatActivity {
 
                 if (heartRate != null) {
                     heartRateTextView.setText(String.format(Locale.getDefault(),
-                            "  Heart Rate: %.2f bpm", heartRate.body.average));
+                            "  Syke: %.2f bpm", heartRate.body.average));
 
                     String heartRateData = String.format(Locale.getDefault(), "%.2f", heartRate.body.average);
                     currentHeartRate = heartRate.body.average;

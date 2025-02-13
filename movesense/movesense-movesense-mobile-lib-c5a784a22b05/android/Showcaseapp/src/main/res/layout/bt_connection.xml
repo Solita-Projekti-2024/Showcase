@@ -14,7 +14,7 @@
         android:layout_height="wrap_content"
         android:gravity="center"
         android:padding="16dp"
-        android:text="Search Movesense devices by clicking button on the bottom"
+        android:text="Varmista, että sensori on päällä ja valitse se alla olevasta listasta"
         android:textColor="@color/colorText"
         android:textSize="18sp"
         android:textStyle="bold"
