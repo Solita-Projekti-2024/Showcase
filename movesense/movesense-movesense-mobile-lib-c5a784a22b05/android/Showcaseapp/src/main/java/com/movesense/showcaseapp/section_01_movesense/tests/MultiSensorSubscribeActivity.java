@@ -37,6 +37,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.text.ParseException;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Locale;
 
 import java.text.SimpleDateFormat;
@@ -49,6 +50,9 @@ import android.util.Log;
 
 import android.view.View;
 import android.widget.Button;
+import android.content.Context;
+
+
 
 
 public class MultiSensorSubscribeActivity extends AppCompatActivity {
@@ -269,8 +273,11 @@ public class MultiSensorSubscribeActivity extends AppCompatActivity {
         builder.setTitle("Alert")
                 .setMessage(message)
                 .setPositiveButton("Hätätila! SOS", (dialog, which) -> {
+                    alertAcknowledged = true;
                     dialog.dismiss();
-                    sendAlert();  // Send alert when SOS is pressed
+                    alertDialog = null;
+                    tiltExceeded = false; // Reset the tilt flag after the alert is acknowledged
+                    sendAlert(this, message);  // Send alert when SOS is pressed
                 })
                 .setNegativeButton("Olen OK", (dialog, which) -> {
                     alertAcknowledged = true;
@@ -288,8 +295,13 @@ public class MultiSensorSubscribeActivity extends AppCompatActivity {
 
 
 
-    private void sendAlert() {
+    private void sendAlert(Context context, String message) {
         // Logic to send the alert (e.g., send a notification, log an event, etc.)
+        if(message.contains("Kaatuminen")){
+            FhirMessageCreator.createFallObservation(context, "12345");
+        } else if (message.contains("Korkea")) {
+            FhirMessageCreator.createHighHeartRateObservation(context,"12345", currentHeartRate);
+        }
         Log.d("MultiSensorSubscribe", "Alert sent!");
     }
 
