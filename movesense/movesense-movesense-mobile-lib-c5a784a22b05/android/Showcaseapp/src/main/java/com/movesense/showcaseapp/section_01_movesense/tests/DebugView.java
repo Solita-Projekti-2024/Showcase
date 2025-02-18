@@ -1,17 +1,14 @@
 package com.movesense.showcaseapp.section_01_movesense.tests;
 
-import android.app.UiAutomation;
 import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
-import android.widget.CompoundButton;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import androidx.appcompat.widget.SwitchCompat;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.google.gson.Gson;
@@ -42,10 +39,7 @@ import java.util.Locale;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
-import android.os.Handler;
-import android.os.Looper;
-import androidx.appcompat.app.AlertDialog;
-import android.util.Log;
+
 
 public class DebugView extends AppCompatActivity {
 
@@ -67,7 +61,6 @@ public class DebugView extends AppCompatActivity {
     private TextView xAxisLinearAccTextView;
     private TextView yAxisLinearAccTextView;
     private TextView zAxisLinearAccTextView;
-    private TextView ecgTextView;
     private GraphView ecgGraphView;
 
     // ECG Graph
@@ -94,16 +87,10 @@ public class DebugView extends AppCompatActivity {
     private File csvFile;
     private StringBuilder csvRowBuffer = new StringBuilder();
 
-
-
-
-
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_multi_sensor_subscribe); // Ensure this matches your XML file name
-
 
         Button backButton = findViewById(R.id.back_button);
         backButton.setOnClickListener(new View.OnClickListener() {
@@ -114,7 +101,6 @@ public class DebugView extends AppCompatActivity {
             }
         });
 
-
         // Init CSV
         csvFile = new File(getExternalFilesDir(null), "sensor_measurements.csv");
         if (!csvFile.exists()) {
@@ -124,11 +110,6 @@ public class DebugView extends AppCompatActivity {
                 Log.e(TAG, "Error creating CSV", e);
             }
         }
-
-        // Clean old data from CSV
-        //cleanOldCsvData();
-
-
 
         // Initialize views based on updated XML layout
         xAxisLinearAccTextView = findViewById(R.id.x_axis_linearAcc_textView);
@@ -143,12 +124,9 @@ public class DebugView extends AppCompatActivity {
         yAxisGyroTextView = findViewById(R.id.y_axis_gyro_textView);
         zAxisGyroTextView = findViewById(R.id.z_axis_gyro_textView);
 
-
         // ECG Graph initialization
         ecgSeries = new LineGraphSeries<>();
         setupEcgGraph();
-
-
 
         // Automatically enable subscriptions
         if (MovesenseConnectedDevices.getConnectedDevices().size() > 0) {
@@ -157,11 +135,9 @@ public class DebugView extends AppCompatActivity {
             subscribeToGyro();
             subscribeToHeartRate();
 
-
         } else {
             Toast.makeText(this, "No connected device found", Toast.LENGTH_SHORT).show();
         }
-
     }
 
     private void logDataToCsv(String linearAccData, String gyroData, String heartRateData, String ecgData) {
@@ -184,54 +160,6 @@ public class DebugView extends AppCompatActivity {
         }
     }
 
-    private void cleanOldCsvData() {
-        File tempFile = new File(getExternalFilesDir(null), "temp_sensor_measurements.csv");
-        long currentTime = System.currentTimeMillis();
-        long twentyFourHoursInMillis = 24 * 60 * 60 * 1000;
-
-        try (BufferedReader reader = new BufferedReader(new FileReader(csvFile));
-             FileWriter writer = new FileWriter(tempFile)) {
-
-            String header = reader.readLine();
-            if (header != null) {
-                writer.append(header).append("\n");
-            }
-
-            String line;
-            while ((line = reader.readLine()) != null) {
-                String[] columns = line.split(";");
-                if (columns.length > 0) {
-                    String timeStampStr = columns[0];
-                    SimpleDateFormat dateFormat;
-
-                    // Handle different timestamp formats
-                    if (timeStampStr.contains("-")) {
-                        dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS", Locale.getDefault());
-                    } else {
-                        dateFormat = new SimpleDateFormat("dd.M.yyyy HH:mm", Locale.getDefault());
-                    }
-
-                    try {
-                        Date timestamp = dateFormat.parse(timeStampStr);
-                        if (timestamp != null && currentTime - timestamp.getTime() <= twentyFourHoursInMillis) {
-                            writer.append(line).append("\n");
-                        }
-                    } catch (Exception e) {
-                        Log.e(TAG, "Error parsing timestamp: " + timeStampStr, e);
-                    }
-                }
-            }
-        } catch (Exception e) {
-            Log.e(TAG, "Error cleaning old CSV data", e);
-        }
-
-        if (tempFile.exists() && csvFile.delete()) {
-            tempFile.renameTo(csvFile);
-        }
-    }
-
-
-
     private void setupEcgGraph() {
         ecgGraphView.addSeries(ecgSeries);
         ecgGraphView.getViewport().setXAxisBoundsManual(true);
@@ -247,14 +175,6 @@ public class DebugView extends AppCompatActivity {
 
         ecgSeries.setColor(getResources().getColor(R.color.colorGreen));
     }
-
-    // Method to monitor the tilt
-
-
-
-
-
-
 
     private void subscribeToGyro() {
         String gyroUri = FormatHelper.formatContractToJson(
@@ -278,8 +198,6 @@ public class DebugView extends AppCompatActivity {
                     yAxisGyroTextView.setText(String.format(Locale.getDefault(), "y: %.6f", arrayData.y));
                     zAxisGyroTextView.setText(String.format(Locale.getDefault(), "z: %.6f", arrayData.z));
 
-
-
                     String gyroDataStr = String.format(Locale.getDefault(), "%.6f;%.6f;%.6f", arrayData.x, arrayData.y, arrayData.z);
 
                     // Log data with placeholders for other sensors
@@ -293,7 +211,6 @@ public class DebugView extends AppCompatActivity {
             }
         });
     }
-
 
     private float calculateMedian(LinkedList<Float> buffer) {
         LinkedList<Float> sortedBuffer = new LinkedList<>(buffer);
@@ -319,8 +236,6 @@ public class DebugView extends AppCompatActivity {
         // Return the greater of the two angles (by absolute value)
         return Math.abs(pitch) > Math.abs(roll) ? pitch : roll;
     }
-
-
 
     private void subscribeToLinearAcc() {
         String linearAccUri = FormatHelper.formatContractToJson(
@@ -356,18 +271,10 @@ public class DebugView extends AppCompatActivity {
 
                     float maxTilt = calculateMaxTilt(filteredX, filteredY, filteredZ);
 
-
-
                     String linearAccData = String.format(Locale.getDefault(), "%.6f;%.6f;%.6f", filteredX, filteredY, filteredZ);
 
                     // Log data with placeholders for other sensors
                     logDataToCsv(linearAccData, "N/A;N/A;N/A", "N/A", "N/A");
-
-
-
-
-
-
 
                 }
             }
@@ -462,7 +369,6 @@ public class DebugView extends AppCompatActivity {
         }
     }
 
-
     private void unsubscribeLinearAcc() {
         if (linearAccSubscription != null) {
             linearAccSubscription.unsubscribe();
@@ -484,8 +390,6 @@ public class DebugView extends AppCompatActivity {
         unsubscribeECG();
         unsubscribeGyro();
         unsubscribeHeartRate(); // Unsubscribe heart rate when destroying activity
-
-
 
     }
 }

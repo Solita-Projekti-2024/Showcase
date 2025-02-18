@@ -9,7 +9,6 @@ import org.json.JSONObject;
 import org.json.JSONArray;
 
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.Date;

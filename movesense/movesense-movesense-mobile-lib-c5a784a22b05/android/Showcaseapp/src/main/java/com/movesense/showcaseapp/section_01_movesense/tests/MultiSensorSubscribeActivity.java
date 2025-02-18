@@ -1,16 +1,13 @@
 package com.movesense.showcaseapp.section_01_movesense.tests;
 
-import android.app.UiAutomation;
 import android.content.Intent;
 import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
-import android.widget.CompoundButton;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import androidx.appcompat.widget.SwitchCompat;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.google.gson.Gson;
@@ -37,7 +34,6 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.text.ParseException;
 import java.util.LinkedList;
-import java.util.List;
 import java.util.Locale;
 
 import java.text.SimpleDateFormat;
@@ -46,7 +42,6 @@ import java.util.Date;
 import android.os.Handler;
 import android.os.Looper;
 import androidx.appcompat.app.AlertDialog;
-import android.util.Log;
 
 import android.view.View;
 import android.widget.Button;
@@ -73,7 +68,6 @@ public class MultiSensorSubscribeActivity extends AppCompatActivity {
     private MdsSubscription heartRateSubscription;
 
 
-    private GraphView ecgGraphView;
 
     // ECG Graph
     private LineGraphSeries<DataPoint> ecgSeries;
@@ -93,11 +87,9 @@ public class MultiSensorSubscribeActivity extends AppCompatActivity {
     private LinkedList<Float> yBuffer = new LinkedList<>();
     private LinkedList<Float> zBuffer = new LinkedList<>();
 
-    private File csvFile;
     private StringBuilder csvRowBuffer = new StringBuilder();
 
     private Handler popupHandler;
-    private Runnable alertRunnable;
     private boolean tiltExceeded = false; // Flag to check if tilt threshold is exceeded
     private long tiltStartTime = 0;  // To track when the tilt exceeds the threshold
     private AlertDialog alertDialog;
@@ -128,7 +120,6 @@ public class MultiSensorSubscribeActivity extends AppCompatActivity {
         }
     }
 
-
     private void initializeCsvFile(File file, String header) {
         try {
             if (!file.exists()) {
@@ -141,10 +132,6 @@ public class MultiSensorSubscribeActivity extends AppCompatActivity {
             e.printStackTrace();
         }
     }
-
-
-
-
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -184,7 +171,6 @@ public class MultiSensorSubscribeActivity extends AppCompatActivity {
             }
         });
 
-
         // Init CSV
         linearAccFile = new File(getExternalFilesDir(null), "linear_acceleration.csv");
         gyroFile = new File(getExternalFilesDir(null), "gyroscope.csv");
@@ -197,18 +183,10 @@ public class MultiSensorSubscribeActivity extends AppCompatActivity {
         initializeCsvFile(heartRateFile, "Timestamp;HeartRate\n");
         initializeCsvFile(ecgFile, "Timestamp;ECG\n");
 
-
-
-
         heartRateTextView = findViewById(R.id.heart_rate_textView);
-
-
-
 
         // ECG Graph initialization
         ecgSeries = new LineGraphSeries<>();
-
-
 
     // Automatically enable subscriptions
         if (MovesenseConnectedDevices.getConnectedDevices().size() > 0) {
@@ -217,11 +195,9 @@ public class MultiSensorSubscribeActivity extends AppCompatActivity {
             subscribeToGyro();
             subscribeToHeartRate();
 
-
         } else {
             Toast.makeText(this, "No connected device found", Toast.LENGTH_SHORT).show();
         }
-
     }
 
     private void logDataToCsv(File file, String data) {
@@ -233,9 +209,6 @@ public class MultiSensorSubscribeActivity extends AppCompatActivity {
             Log.e(TAG, "Error writing to " + file.getName(), e);
         }
     }
-
-
-
 
     // Method to monitor the tilt
     private void monitorTilt(double tiltValue) {
@@ -260,7 +233,6 @@ public class MultiSensorSubscribeActivity extends AppCompatActivity {
             alertAcknowledged = false;
             tiltExceeded = false;
         }
-
     }
 
     private void showPopup(String message) {
@@ -292,9 +264,6 @@ public class MultiSensorSubscribeActivity extends AppCompatActivity {
         }
     }
 
-
-
-
     private void sendAlert(Context context, String message) {
         // Logic to send the alert (e.g., send a notification, log an event, etc.)
         if(message.contains("Kaatuminen")){
@@ -304,10 +273,6 @@ public class MultiSensorSubscribeActivity extends AppCompatActivity {
         }
         Log.d("MultiSensorSubscribe", "Alert sent!");
     }
-
-
-
-
 
     private void subscribeToGyro() {
         String gyroUri = FormatHelper.formatContractToJson(
@@ -421,7 +386,6 @@ public class MultiSensorSubscribeActivity extends AppCompatActivity {
                 Log.e(TAG, "Error reading or parsing CSV", e);
             }
 
-
             // Convert time to total seconds (lyingTime, uprightTime, walkingTime are in 1/13ths of a second)
             int totalLyingSeconds = (int) (lyingTime * (1.0f / 13));
             int totalUprightSeconds = (int) (uprightTime * (1.0f / 13));
@@ -473,12 +437,6 @@ public class MultiSensorSubscribeActivity extends AppCompatActivity {
         processingThread.start();
     }
 
-
-
-
-
-
-
     private float calculateMedian(LinkedList<Float> buffer) {
         LinkedList<Float> sortedBuffer = new LinkedList<>(buffer);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
@@ -503,8 +461,6 @@ public class MultiSensorSubscribeActivity extends AppCompatActivity {
         // Return the greater of the two angles (by absolute value)
         return Math.abs(pitch) > Math.abs(roll) ? pitch : roll;
     }
-
-
 
     private void subscribeToLinearAcc() {
         String linearAccUri = FormatHelper.formatContractToJson(
@@ -534,10 +490,6 @@ public class MultiSensorSubscribeActivity extends AppCompatActivity {
                     float filteredY = calculateMedian(yBuffer);
                     float filteredZ = calculateMedian(zBuffer);
 
-/*                    xAxisLinearAccTextView.setText(String.format(Locale.getDefault(), "x: %.6f", filteredX));
-                    yAxisLinearAccTextView.setText(String.format(Locale.getDefault(), "y: %.6f", filteredY));
-                    zAxisLinearAccTextView.setText(String.format(Locale.getDefault(), "z: %.6f", filteredZ));*/
-
                     float maxTilt = calculateMaxTilt(filteredX, filteredY, filteredZ);
 
                     if (gyroThresholdExceeded){
@@ -559,15 +511,10 @@ public class MultiSensorSubscribeActivity extends AppCompatActivity {
                     String linearAccData = String.format(Locale.getDefault(), "%.6f;%.6f;%.6f", arrayData.x, arrayData.y, arrayData.z);
                     logDataToCsv(linearAccFile, linearAccData);
 
-
                     monitorTilt(maxTilt);
                     runOnUiThread(() -> {
                         stickmanImage.setRotation(maxTilt);
                                 });
-
-
-
-
                 }
             }
 
@@ -662,7 +609,6 @@ public class MultiSensorSubscribeActivity extends AppCompatActivity {
         }
     }
 
-
     private void unsubscribeLinearAcc() {
         if (linearAccSubscription != null) {
             linearAccSubscription.unsubscribe();
@@ -698,7 +644,5 @@ public class MultiSensorSubscribeActivity extends AppCompatActivity {
                 e.printStackTrace();
             }
         }
-
-
     }
 }
