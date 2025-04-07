@@ -21,7 +21,7 @@ ShowcaseApp on Android-sovellus, joka yhdistyy Movesense-anturiin seuratakseen l
 1.	Kloonaa repositorio: 
 2.	git clone <repository_url>
 3.	Avaa projekti Android Studiossa. 
-* movesense/movesense-movesense-mobile-lib-c5a784a22b05/android/Movesense
+* movesense/movesense-movesense-mobile-lib-c5a784a22b05/android/Showecaseapp
 4.	Synkronoi Gradle ja asenna riippuvuudet.
 5.	Suorita sovellus Android-laitteella, jossa on Bluetooth käytössä.
 ## Käyttöohjeet
@@ -50,7 +50,7 @@ ShowcaseApp is an Android application that connects to Movesense sensor to monit
 1.	Clone the repository: 
 2.	git clone <repository_url>
 3.	Open the project in Android Studio.
-* movesense/movesense-movesense-mobile-lib-c5a784a22b05/android/Movesense
+* movesense/movesense-movesense-mobile-lib-c5a784a22b05/android/Showecaseapp
 4.	Sync Gradle and install dependencies.
 5.	Run the application on an Android device with Bluetooth enabled.
 ## Usage
